@@ -3,211 +3,288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- คำสั่งป้องกันการบล็อกรูปภาพการ์ดจาก Bandai สะท้อนรูปภาพได้ 100% -->
+    <!-- ป้องกันการบล็อกรูปภาพจาก Bandai ทำให้รูปภาพการ์ดแสดงผลได้ 100% -->
     <meta name="referrer" content="no-referrer">
     <title>Card Kaizoku - One Piece TCG Deck Builder</title>
-    <!-- โหลด Tailwind CSS เพื่อความสวยงามธีม Dark Mode -->
+    <!-- โหลด Tailwind CSS สำหรับดีไซน์สุดเท่ธีม Dark Mode แดง-ดำ -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e1e1e; }
+        ::-webkit-scrollbar-track { background: #121212; }
         ::-webkit-scrollbar-thumb { background: #ff4b4b; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #e03e3e; }
     </style>
 </head>
-<body class="bg-[#121212] text-gray-100 min-h-screen font-sans">
+<body class="bg-[#0f0f0f] text-gray-100 min-h-screen font-sans">
 
-    <!-- Header -->
-    <header class="bg-[#1a1a1a] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-lg">
+    <!-- Header Navigation -->
+    <header class="bg-[#161616] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <span class="text-3xl">🏴‍☠️</span>
                 <div>
                     <h1 class="text-xl font-bold tracking-wider text-red-500 font-mono">CARD KAIZOKU</h1>
-                    <p class="text-xs text-gray-400">One Piece TCG Deck Builder & Database</p>
+                    <p class="text-xs text-gray-400">One Piece TCG Deck Builder & Live Database</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <label for="set-selector" class="text-sm font-semibold text-gray-400">เลือกชุดการ์ด:</label>
-                <select id="set-selector" class="bg-[#2a2a2a] text-white border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
-                    <option value="OP-17">OP-17 - The World's Strongest Warriors</option>
-                    <option value="OP-16">OP-16 - The Time of Battle</option>
-                    <option value="EB-04">EB-04 - Egghead Crisis</option>
-                    <option value="OP-01" selected>OP-01 - Romance Dawn</option>
+            
+            <!-- Dynamic Set Selector -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                <label for="set-selector" class="text-sm font-semibold text-gray-400 shrink-0">เลือกชุดการ์ด:</label>
+                <select id="set-selector" class="w-full md:w-72 bg-[#222] text-white border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-red-500 transition cursor-pointer">
+                    <option value="">🚢 กำลังโหลดชุดการ์ด...</option>
                 </select>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Left Column: Deck Management (4 Cols) -->
-        <section class="lg:col-span-5 bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 h-fit sticky top-24 shadow-md">
+        <!-- Left Side: My Deck Sheet (5 Columns) -->
+        <section class="lg:col-span-5 bg-[#161616] rounded-xl p-5 border border-gray-800 h-fit lg:sticky lg:top-24 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-red-500 flex items-center gap-2"><span>🗃️</span> เด็คของฉัน</h2>
-                <button id="clear-deck-btn" class="text-xs bg-red-950 text-red-400 border border-red-800 hover:bg-red-900 px-3 py-1 rounded transition">ล้างข้อมูลทั้งหมด 🧹</button>
+                <h2 class="text-lg font-bold text-red-500 flex items-center gap-2">
+                    <span>🗃️</span> เด็คของฉัน
+                </h2>
+                <button id="clear-deck-btn" class="text-xs bg-red-950 text-red-400 border border-red-950 hover:bg-red-900 hover:text-white px-3 py-1.5 rounded-lg transition duration-200">
+                    ล้างเด็คทั้งหมด 🧹
+                </button>
             </div>
 
-            <!-- Active Leader Section -->
-            <div id="leader-slot" class="bg-[#242424] rounded-lg p-4 border border-gray-700 mb-5 text-center flex flex-col items-center">
-                <p class="text-xs text-gray-400 mb-2">👑 LEADER ของคุณ</p>
-                <div id="leader-info" class="text-sm font-semibold text-gray-300">ยังไม่ได้เลือกลีดเดอร์</div>
+            <!-- Leader Slot Container -->
+            <div id="leader-slot" class="bg-[#1f1f1f] rounded-lg p-4 border border-gray-800 mb-4 text-center flex flex-col items-center justify-center min-h-[140px] transition duration-200">
+                <p class="text-xs text-gray-400 mb-2">👑 LEADER ของเด็ค</p>
+                <div id="leader-info" class="text-sm font-medium text-gray-500">กรุณาเลือกลีดเดอร์จากคลังการ์ด</div>
             </div>
 
-            <!-- Deck Stats -->
-            <div class="bg-[#242424] rounded-lg p-4 border border-gray-700 mb-5 space-y-3">
+            <!-- Deck Status & Validations -->
+            <div class="bg-[#1f1f1f] rounded-lg p-4 border border-gray-800 mb-4 space-y-3">
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">จำนวนการ์ดในเด็คหลัก:</span>
-                    <span class="font-bold text-white"><span id="total-count">0</span> / 50 ใบ</span>
+                    <span class="text-gray-400">จำนวนการ์ดเด็คหลัก:</span>
+                    <span class="font-mono font-bold text-white"><span id="total-count">0</span> / 50 ใบ</span>
                 </div>
+                <!-- Progress Bar -->
                 <div class="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
                     <div id="deck-progress" class="bg-red-500 h-2.5 transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <div id="validation-msg" class="text-xs text-yellow-400 bg-yellow-950/40 p-2.5 rounded border border-yellow-900/50">
-                    ℹ️ ระบบจัดเด็คพร้อมใช้งาน กรุณาเลือกลีดเดอร์และเพิ่มการ์ดลงเด็ค
+                <!-- Interactive Alert Box -->
+                <div id="validation-msg" class="text-xs text-yellow-400 bg-yellow-950/30 p-3 rounded-lg border border-yellow-900/50">
+                    ℹ️ เริ่มต้นสร้างเด็คโดยการเลือก Leader ด้านขวา แล้วเพิ่มการ์ด Character, Event, หรือ Stage ให้ครบ 50 ใบครับ
                 </div>
             </div>
 
-            <!-- Main Deck List -->
-            <h3 class="text-sm font-bold text-gray-400 mb-2">รายชื่อการ์ดในเด็ค</h3>
-            <div id="deck-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-5">
-                <p class="text-sm text-gray-500 italic text-center py-4">เด็คยังว่างอยู่ เลือกการ์ดด้านขวาเพื่อเพิ่ม</p>
+            <!-- Card List Scroll View -->
+            <h3 class="text-sm font-bold text-gray-400 mb-2 flex justify-between items-center">
+                <span>รายชื่อการ์ดในเด็ค</span>
+                <span id="deck-cost-avg" class="text-xs font-normal text-gray-500"></span>
+            </h3>
+            <div id="deck-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-4">
+                <p class="text-sm text-gray-500 italic text-center py-8">เด็คยังว่างเปล่า เลือกการ์ดด้านขวาเพื่อเริ่มผจญภัย</p>
             </div>
 
-            <!-- Export Deck -->
+            <!-- Export Code Box -->
             <div>
-                <h3 class="text-sm font-bold text-gray-400 mb-2">📤 คัดลอกรายชื่อการ์ด (Export เพื่อเอาไปใช้เล่นต่อ)</h3>
-                <textarea id="export-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-3 text-xs font-mono focus:outline-none" rows="4" readonly placeholder="รายชื่อเด็คจะแสดงผลตรงนี้ในรูปแบบข้อความมาตรฐาน"></textarea>
+                <h3 class="text-sm font-bold text-gray-400 mb-1.5">📤 ส่งออกรายชื่อเด็ค (Export)</h3>
+                <textarea id="export-textarea" class="w-full bg-[#0a0f0a] text-green-400 border border-gray-800 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-red-500" rows="4" readonly placeholder="รายชื่อการ์ดรูปแบบ TCGPlayer / Simulator จะขึ้นตรงนี้โดยอัตโนมัติ"></textarea>
             </div>
         </section>
 
-        <!-- Right Column: Card Finder (7 Cols) -->
+        <!-- Right Side: Card Finder (7 Columns) -->
         <section class="lg:col-span-7 space-y-6">
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><span>🔍</span> ค้นหาและคัดกรองการ์ด</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Advance Filter Panel -->
+            <div class="bg-[#161616] rounded-xl p-5 border border-gray-800 shadow-xl">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><span>🔍</span> ระบบค้นหาและคัดกรองการ์ด</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">ค้นหาด่วน (ชื่อ / เลขการ์ด / เอฟเฟกต์):</label>
-                        <input id="search-input" type="text" placeholder="เช่น Zoro, OP01-001..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        <label class="text-xs text-gray-400 block mb-1">ค้นหาด่วน (ชื่อ / เลขการ์ด):</label>
+                        <input id="search-input" type="text" placeholder="เช่น Zoro, OP01-001..." class="w-full bg-[#222] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500 transition">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">กรองประเภทการ์ด:</label>
-                        <select id="category-filter" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        <label class="text-xs text-gray-400 block mb-1">ประเภทการ์ด:</label>
+                        <select id="category-filter" class="w-full bg-[#222] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500 transition cursor-pointer">
                             <option value="ALL">ทั้งหมด</option>
                             <option value="Leader">Leader (ลีดเดอร์)</option>
                             <option value="Character">Character (ตัวละคร)</option>
-                            <option value="Event">Event (การ์ดเวทย์)</option>
+                            <option value="Event">Event (อีเวนต์)</option>
                             <option value="Stage">Stage (สถานที่)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">สีของการ์ด:</label>
+                        <select id="color-filter" class="w-full bg-[#222] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500 transition cursor-pointer">
+                            <option value="ALL">ทุกสี</option>
+                            <option value="Red">Red (แดง)</option>
+                            <option value="Blue">Blue (น้ำเงิน)</option>
+                            <option value="Green">Green (เขียว)</option>
+                            <option value="Yellow">Yellow (เหลือง)</option>
+                            <option value="Black">Black (ดำ)</option>
+                            <option value="Purple">Purple (ม่วง)</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <!-- Card Grid View -->
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
+            <!-- Cards Database Grid -->
+            <div class="bg-[#161616] rounded-xl p-5 border border-gray-800 shadow-xl">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold">🎴 คลังการ์ดทั้งหมด</h2>
-                    <span id="card-count" class="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-full">กำลังโหลดข้อมูล...</span>
+                    <h2 class="text-lg font-bold text-gray-200">🎴 คลังการ์ด</h2>
+                    <span id="card-count" class="text-xs text-gray-400 bg-gray-800 px-3 py-1.5 rounded-full font-mono">กำลังโหลด...</span>
                 </div>
                 
+                <!-- Cards Container Grid (3 Column on big screen, 2 on mobile) -->
                 <div id="card-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <!-- Cards will render here -->
+                    <!-- Cards list will inject here -->
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- JavaScript logic -->
+    <!-- App Logic Execution -->
     <script>
-        const API_URL = "https://raw.githubusercontent.com/buhbbl/punk-records/main/english-asia/index/cards_by_id.json";
+        const PACKS_URL = "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/packs.json";
         
-        let allCards = {};
-        let filteredCards = [];
-        let deck = {}; // {card_id: count}
-        let leader = null;
+        let allPacks = [];
+        let currentCards = [];
+        let deck = JSON.parse(localStorage.getItem("optcg_deck")) || {}; // { cardId: { card, count } }
+        let leader = JSON.parse(localStorage.getItem("optcg_leader")) || null;
 
-        // Ingestion & init
-        async function loadCards() {
-            const countLabel = document.getElementById("card-count");
+        // 1. Initial Launch
+        async function init() {
+            await loadPacks();
+            
+            // Restore Leader UI if exists
+            if (leader) {
+                renderLeaderUI();
+            }
+            updateDeckUI();
+        }
+
+        // 2. Load and Populate Set Selector Dropdown
+        async function loadPacks() {
+            const selector = document.getElementById("set-selector");
             try {
-                const res = await fetch(API_URL);
-                if (!res.ok) throw new Error("API network error");
-                allCards = await res.json();
-                filterAndRender();
+                const res = await fetch(PACKS_URL);
+                if (!res.ok) throw new Error("Packs list load error");
+                allPacks = await res.json();
+                
+                selector.innerHTML = "";
+                
+                // Filter out irrelevant or promotional dummy packs if any
+                allPacks.forEach(pack => {
+                    const opt = document.createElement("option");
+                    opt.value = pack.code;
+                    opt.innerText = `${pack.code} - ${pack.name}`;
+                    // Set default selection to OP-01, or first item
+                    if (pack.code === "OP-01") opt.selected = true;
+                    selector.appendChild(opt);
+                });
+
+                // Load initial OP-01 set
+                await loadSet("OP-01");
             } catch (err) {
-                countLabel.innerText = "โหลดข้อมูลล้มเหลว";
-                countLabel.classList.add("bg-red-900", "text-red-300");
+                selector.innerHTML = '<option value="">❌ โหลดข้อมูลชุดการ์ดล้มเหลว</option>';
                 console.error(err);
             }
         }
 
+        // 3. Load Cards of Selected Expansion Pack (OP-16, OP-17, EB-04...)
+        async function loadSet(setCode) {
+            const grid = document.getElementById("card-grid");
+            const countLabel = document.getElementById("card-count");
+            countLabel.innerText = "กำลังโหลด...";
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-16 text-gray-400 italic flex flex-col items-center justify-center gap-3">
+                    <span class="animate-spin text-3xl text-red-500">⚓</span>
+                    <span>กำลังกางแผนที่เรือ... โหลดข้อมูลการ์ดชุด ${setCode} แบบเรียลไทม์</span>
+                </div>
+            `;
+            
+            try {
+                const url = `https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/cards/${setCode}.json`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Set cards load error");
+                currentCards = await res.json();
+                
+                filterAndRender();
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `<div class="col-span-full text-center py-16 text-red-500 italic font-semibold">❌ โหลดข้อมูลการ์ดชุด ${setCode} ล้มเหลว กรุณาลองใหม่อีกครั้ง</div>`;
+                countLabel.innerText = "ล้มเหลว";
+            }
+        }
+
+        // 4. Client-side Search and Filtering (Multi-condition)
         function filterAndRender() {
-            const selectedSet = document.getElementById("set-selector").value;
             const searchVal = document.getElementById("search-input").value.toLowerCase().trim();
             const catVal = document.getElementById("category-filter").value;
+            const colorVal = document.getElementById("color-filter").value;
 
-            filteredCards = Object.values(allCards).filter(card => {
-                // Filter by Pack Set Code (e.g. OP-01, OP-16)
-                const packCode = card.pack_id ? card.pack_id : "";
-                const isSetMatch = selectedSet === "OP-01" ? (card.card_id.startsWith("OP01") || card.card_id.startsWith("ST01")) :
-                                   selectedSet === "OP-16" ? (card.card_id.startsWith("OP16") || card.card_id.startsWith("ST16") || card.card_id.startsWith("ST30") || card.card_id.startsWith("ST31") || card.card_id.startsWith("ST32") || card.card_id.startsWith("ST33") || card.card_id.startsWith("ST34") || card.card_id.startsWith("ST35") || card.card_id.startsWith("ST36")) :
-                                   selectedSet === "OP-17" ? card.card_id.startsWith("OP17") :
-                                   selectedSet === "EB-04" ? card.card_id.startsWith("EB04") : false;
-
-                if (!isSetMatch) return false;
-
-                // Category match
+            const filtered = currentCards.filter(card => {
+                // Category Filter
                 if (catVal !== "ALL" && card.category !== catVal) return false;
 
-                // Text search match
+                // Color Filter
+                if (colorVal !== "ALL") {
+                    if (!card.colors || !card.colors.includes(colorVal)) return false;
+                }
+
+                // Search Query Filter (Checks ID, Name, Effect, or Types)
                 if (searchVal !== "") {
                     const name = card.name ? card.name.toLowerCase() : "";
-                    const cid = card.card_id ? card.card_id.toLowerCase() : "";
+                    const cid = card.id ? card.id.toLowerCase() : "";
                     const effect = card.effect ? card.effect.toLowerCase() : "";
-                    if (!name.includes(searchVal) && !cid.includes(searchVal) && !effect.includes(searchVal)) {
+                    const types = card.types ? card.types.join(' ').toLowerCase() : "";
+                    
+                    if (!name.includes(searchVal) && !cid.includes(searchVal) && !effect.includes(searchVal) && !types.includes(searchVal)) {
                         return false;
                     }
                 }
                 return true;
             });
 
-            // Update UI count
-            document.getElementById("card-count").innerText = `พบทั้งหมด ${filteredCards.length} ใบ`;
-            renderGrid();
+            document.getElementById("card-count").innerText = `พบ ${filtered.length} ใบ`;
+            renderGrid(filtered);
         }
 
-        function renderGrid() {
+        // 5. Render Responsive Cards Grid (with fallback images)
+        function renderGrid(cards) {
             const grid = document.getElementById("card-grid");
             grid.innerHTML = "";
 
-            if (filteredCards.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500 italic text-sm">ไม่พบการ์ดที่ตรงกับเงื่อนไข</div>`;
+            if (cards.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center text-gray-500 italic text-sm">ไม่พบการ์ดที่ตรงกับเงื่อนไขในชุดนี้</div>`;
                 return;
             }
 
-            filteredCards.forEach(card => {
+            cards.forEach(card => {
                 const isLeader = card.category === "Leader";
-                const currentCount = deck[card.card_id] || 0;
+                const currentEntry = deck[card.id] || { count: 0 };
+                const currentCount = currentEntry.count;
+                
+                // Join array of colors to readable string
+                const colorsStr = card.colors ? card.colors.join('/') : "N/A";
                 
                 const cardDiv = document.createElement("div");
-                cardDiv.className = "bg-[#222] border border-gray-800 rounded-lg p-3 flex flex-col justify-between hover:border-red-500 transition duration-200 shadow-sm";
+                cardDiv.className = "bg-[#1f1f1f] border border-gray-800 rounded-xl p-3 flex flex-col justify-between hover:border-red-500 hover:scale-[1.02] transition duration-200 shadow-lg";
                 
+                // We use standard referrerpolicy="no-referrer" to bypass Bandai's CDN anti-hotlinking blockage
                 cardDiv.innerHTML = `
                     <div class="space-y-2">
-                        <img src="${card.img_url}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full rounded-md object-contain aspect-[3/4] bg-neutral-900" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
+                        <img src="${card.image}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full rounded-lg object-contain aspect-[3/4] bg-neutral-900 shadow-md" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
                         <div>
-                            <h4 class="text-xs font-bold truncate text-white" title="${card.name}">${card.name}</h4>
-                            <p class="text-[10px] text-gray-400 font-mono">${card.card_id} | ${card.category}</p>
-                            <p class="text-[10px] font-bold ${card.colors[0] === 'Red' ? 'text-red-500' : card.colors[0] === 'Blue' ? 'text-blue-400' : card.colors[0] === 'Green' ? 'text-green-500' : card.colors[0] === 'Yellow' ? 'text-yellow-400' : card.colors[0] === 'Black' ? 'text-gray-400' : 'text-purple-400'}">${card.colors.join('/')}</p>
+                            <h4 class="text-xs font-bold text-white truncate" title="${card.name}">${card.name}</h4>
+                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">${card.id} | ${card.category}</p>
+                            <p class="text-[10px] font-bold text-red-400 mt-0.5">${colorsStr}</p>
                         </div>
                     </div>
                     <div class="mt-3">
                         ${isLeader ? 
-                            `<button onclick="setLeader('${card.card_id}')" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xs py-1.5 px-2 rounded transition">เลือกเป็น Leader 👑</button>` :
-                            `<button onclick="addToDeck('${card.card_id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-1.5 px-2 rounded transition flex justify-between items-center">
+                            `<button onclick="setLeader('${card.id}')" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xs py-2 px-2.5 rounded-lg transition duration-200">เลือกเป็น Leader 👑</button>` :
+                            `<button onclick="addToDeck('${card.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 px-2.5 rounded-lg transition duration-200 flex justify-between items-center">
                                 <span>เพิ่มการ์ด</span>
-                                <span class="bg-red-900 text-white px-1.5 py-0.5 rounded-full text-[10px]">${currentCount}</span>
+                                <span class="bg-red-950 text-red-200 px-2 py-0.5 rounded-full text-[9px] font-mono">${currentCount}</span>
                             </button>`
                         }
                     </div>
@@ -216,139 +293,179 @@
             });
         }
 
+        // 6. Set Active Deck Leader
         window.setLeader = function(cardId) {
-            const card = allCards[cardId];
+            const card = currentCards.find(c => c.id === cardId);
             if (!card) return;
             leader = card;
             
+            // Save state to browser storage
+            localStorage.setItem("optcg_leader", JSON.stringify(leader));
+            
+            renderLeaderUI();
+            updateDeckUI();
+        }
+
+        function renderLeaderUI() {
             const slot = document.getElementById("leader-slot");
             slot.innerHTML = `
-                <p class="text-xs text-gray-400 mb-2">👑 LEADER ของคุณ</p>
-                <img src="${card.img_url}" referrerpolicy="no-referrer" class="w-24 rounded-md shadow-md mb-2 bg-neutral-900" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
-                <div class="text-sm font-bold text-yellow-400">${card.name}</div>
-                <div class="text-xs text-gray-400 font-mono mt-0.5">${card.card_id}</div>
-                <button onclick="removeLeader()" class="mt-3 text-[10px] bg-red-950/80 text-red-400 hover:bg-red-900 hover:text-white border border-red-800 rounded px-2.5 py-1 transition">เปลี่ยน Leader ❌</button>
+                <p class="text-xs text-gray-400 mb-2">👑 LEADER ของเด็ค</p>
+                <img src="${leader.image}" referrerpolicy="no-referrer" class="w-24 rounded-lg shadow-xl mb-2 bg-neutral-900" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
+                <div class="text-sm font-bold text-yellow-400 truncate max-w-full px-2" title="${leader.name}">${leader.name}</div>
+                <div class="text-xs text-gray-400 font-mono mt-0.5">${leader.id} (${leader.colors.join('/')})</div>
+                <button onclick="removeLeader()" class="mt-3 text-[10px] bg-red-950 text-red-400 hover:bg-red-900 hover:text-white border border-red-800 rounded-md px-3 py-1 transition duration-200">เปลี่ยน Leader ❌</button>
             `;
-            
-            updateDeckUI();
         }
 
         window.removeLeader = function() {
             leader = null;
+            localStorage.removeItem("optcg_leader");
+            
             const slot = document.getElementById("leader-slot");
             slot.innerHTML = `
-                <p class="text-xs text-gray-400 mb-2">👑 LEADER ของคุณ</p>
-                <div id="leader-info" class="text-sm font-semibold text-gray-500 py-3">ยังไม่ได้เลือกลีดเดอร์</div>
+                <p class="text-xs text-gray-400 mb-2">👑 LEADER ของเด็ค</p>
+                <div id="leader-info" class="text-sm font-semibold text-gray-500 py-3">กรุณาเลือกลีดเดอร์จากคลังการ์ด</div>
             `;
             updateDeckUI();
         }
 
+        // 7. Add Card to Deck Logic with rules checking
         window.addToDeck = function(cardId) {
-            const currentCount = deck[cardId] || 0;
-            const totalCards = Object.values(deck).reduce((a, b) => a + b, 0);
+            let card = currentCards.find(c => c.id === cardId);
+            // If card isn't in currently loaded set list, fetch from cached deck
+            if (!card && deck[cardId]) {
+                card = deck[cardId].card;
+            }
+            if (!card) return;
+
+            const currentEntry = deck[cardId] || { card: card, count: 0 };
+            const totalCards = Object.values(deck).reduce((sum, item) => sum + item.count, 0);
 
             if (totalCards >= 50) {
-                alert("เด็คหลักใส่การ์ดเต็ม 50 ใบตามกำหนดแล้วครับ!");
+                alert("เด็คหลักมีการ์ดครบ 50 ใบตามกำหนดแล้วครับ!");
                 return;
             }
-            if (currentCount >= 4) {
-                alert("ใส่การ์ดใบเดียวกันซ้ำกันได้สูงสุดไม่เกิน 4 ใบตามกติกาครับ!");
+            if (currentEntry.count >= 4) {
+                alert("ใส่การ์ดใบเดียวกันได้ไม่เกิน 4 ใบในเด็ค!");
                 return;
             }
 
-            deck[cardId] = currentCount + 1;
+            deck[cardId] = {
+                card: card,
+                count: currentEntry.count + 1
+            };
+            
+            // Save state
+            localStorage.setItem("optcg_deck", JSON.stringify(deck));
+            
             updateDeckUI();
             filterAndRender();
         };
 
+        // 8. Subtract card count or remove entirely
         window.subFromDeck = function(cardId) {
             if (deck[cardId]) {
-                deck[cardId] -= 1;
-                if (deck[cardId] <= 0) {
+                deck[cardId].count -= 1;
+                if (deck[cardId].count <= 0) {
                     delete deck[cardId];
                 }
+                
+                // Save state
+                localStorage.setItem("optcg_deck", JSON.stringify(deck));
+                
                 updateDeckUI();
                 filterAndRender();
             }
         };
 
+        // 9. Process UI Re-rendering for My Deck List
         function updateDeckUI() {
             const listContainer = document.getElementById("deck-list-container");
             listContainer.innerHTML = "";
 
-            const total = Object.values(deck).reduce((a, b) => a + b, 0);
+            const total = Object.values(deck).reduce((sum, item) => sum + item.count, 0);
             document.getElementById("total-count").innerText = total;
             document.getElementById("deck-progress").style.width = `${(total / 50) * 100}%`;
 
-            // Card list rendering
+            // If empty
             if (Object.keys(deck).length === 0) {
-                listContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-4">เด็คยังว่างอยู่ เลือกการ์ดด้านขวาเพื่อเพิ่ม</p>`;
+                listContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-8">เด็คยังว่างเปล่า เลือกการ์ดด้านขวาเพื่อเริ่มผจญภัย</p>`;
             } else {
-                Object.entries(deck).forEach(([cardId, count]) => {
-                    const card = allCards[cardId];
+                // Populate rows
+                Object.entries(deck).forEach(([cardId, entry]) => {
+                    const card = entry.card;
+                    const count = entry.count;
                     const name = card ? card.name : cardId;
                     
-                    // Validate color alignment with active Leader
+                    // Validate color compatibility with Leader
                     let colorError = "";
                     if (leader && card) {
                         const hasMatchingColor = card.colors.some(c => leader.colors.includes(c));
                         if (!hasMatchingColor) {
-                            colorError = `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[9px] bg-red-950 text-red-400 font-bold border border-red-800">สีไม่ตรงลีดเดอร์ ⚠️</span>`;
+                            colorError = `<span class="ml-1.5 px-2 py-0.5 rounded text-[9px] bg-red-950 text-red-400 font-bold border border-red-800">สีไม่ตรง Leader ⚠️</span>`;
                         }
                     }
 
                     const row = document.createElement("div");
-                    row.className = "flex justify-between items-center bg-[#242424] px-3 py-2 rounded-lg border border-gray-800 hover:border-gray-700 transition";
+                    row.className = "flex justify-between items-center bg-[#1f1f1f] px-3 py-2.5 rounded-lg border border-gray-800 hover:border-gray-700 transition duration-150";
                     row.innerHTML = `
                         <div class="flex-1 min-w-0 pr-2">
-                            <div class="text-xs font-semibold text-white truncate">${name}</div>
-                            <div class="text-[10px] text-gray-400 font-mono">${cardId} ${colorError}</div>
+                            <div class="text-xs font-semibold text-gray-200 truncate" title="${name}">${name}</div>
+                            <div class="text-[10px] text-gray-400 font-mono mt-0.5">${cardId} ${colorError}</div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="subFromDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">➖</button>
-                            <span class="text-xs font-bold text-red-400 font-mono w-4 text-center">${count}</span>
-                            <button onclick="addToDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">➕</button>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button onclick="subFromDeck('${cardId}')" class="bg-gray-800 hover:bg-red-950 hover:text-red-400 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition duration-150">➖</button>
+                            <span class="text-xs font-bold text-red-500 font-mono w-4 text-center">${count}</span>
+                            <button onclick="addToDeck('${cardId}')" class="bg-gray-800 hover:bg-green-950 hover:text-green-400 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition duration-150">➕</button>
                         </div>
                     `;
                     listContainer.appendChild(row);
                 });
             }
 
-            // Rules validator messaging
+            // Interactive Validation alert message
             const validationBox = document.getElementById("validation-msg");
             if (total < 50) {
                 validationBox.innerHTML = `ℹ️ การ์ดในเด็คยังขาดอีก <strong>${50 - total} ใบ</strong> เพื่อให้ครบ 50 ใบพอดีตามกฎแข่ง`;
-                validationBox.className = "text-xs text-yellow-400 bg-yellow-950/40 p-2.5 rounded border border-yellow-900/50";
+                validationBox.className = "text-xs text-yellow-400 bg-yellow-950/30 p-3 rounded-lg border border-yellow-900/50";
             } else if (total === 50) {
-                validationBox.innerHTML = `✅ เด็คของคุณมีการ์ดครบ 50 ใบสมบูรณ์และถูกต้องพร้อมใช้แข่งแล้ว!`;
-                validationBox.className = "text-xs text-green-400 bg-green-950/40 p-2.5 rounded border border-green-900/50";
+                validationBox.innerHTML = `✅ เด็คของคุณมีการ์ดครบ 50 ใบสมบูรณ์และถูกต้องตามกฎสากลแล้วครับ!`;
+                validationBox.className = "text-xs text-green-400 bg-green-950/30 p-3 rounded-lg border border-green-900/50";
             }
 
-            // Export Text area rendering
-            const textLines = [];
+            // Export to text mass format
+            const exportLines = [];
             if (leader) {
-                textLines.append(`1x ${leader.card_id}`);
+                exportLines.push(`1x ${leader.id}`);
             }
-            Object.entries(deck).forEach(([id, count]) => {
-                textLines.push(`${count}x ${id}`);
+            Object.entries(deck).forEach(([id, entry]) => {
+                exportLines.push(`${entry.count}x ${id}`);
             });
-            document.getElementById("export-textarea").value = textLines.join("\n");
+            document.getElementById("export-textarea").value = exportLines.join("\n");
         }
 
-        // Clean-up reset triggers
+        // 10. Clear Deck Sheet Trigger
         document.getElementById("clear-deck-btn").addEventListener("click", () => {
-            deck = {};
-            removeLeader();
-            filterAndRender();
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลในเด็คทั้งหมด?")) {
+                deck = {};
+                localStorage.removeItem("optcg_deck");
+                removeLeader();
+                filterAndRender();
+            }
         });
 
-        // Event hooks
-        document.getElementById("set-selector").addEventListener("change", filterAndRender);
+        // Event Listeners for Filters
+        document.getElementById("set-selector").addEventListener("change", (e) => {
+            if (e.target.value) {
+                loadSet(e.target.value);
+            }
+        });
         document.getElementById("search-input").addEventListener("input", filterAndRender);
         document.getElementById("category-filter").addEventListener("change", filterAndRender);
+        document.getElementById("color-filter").addEventListener("change", filterAndRender);
 
-        // Core launch
-        loadCards();
+        // Run application
+        init();
     </script>
 </body>
 </html>
