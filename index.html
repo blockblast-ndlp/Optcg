@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Card Kaizoku - OPTCG Deck Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #ff4b4b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e03e3e; }
+        .card-container {
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .card-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(255, 75, 75, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-[#121212] text-gray-100 min-h-screen font-sans antialiased">
+
+    <!-- Header -->
+    <header class="bg-[#1a1a1a] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl">🏴‍☠️</span>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wider text-red-500 font-mono">CARD KAIZOKU</h1>
+                    <p class="text-xs text-gray-400">One Piece TCG Deck Builder — fully self-contained, runs on GitHub Pages</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <label for="set-selector" class="text-sm font-semibold text-gray-400">Card Set:</label>
+                <select id="set-selector" class="bg-[#242424] text-white border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
+                    <option value="ALL">All Sets</option>
+                    <option value="OP-16">OP-16: The Time of Battle</option>
+                    <option value="OP-17">OP-17: The World's Strongest Warriors</option>
+                    <option value="EB-04">EB-04: Extra Booster Egghead Crisis</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: My Deck Sheet (5 Cols) -->
+        <section class="lg:col-span-5 space-y-6">
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 h-fit shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-red-500 flex items-center gap-2">
+                        <i class="fa-solid fa-box-archive"></i> My Deck
+                    </h2>
+                    <button id="clear-deck-btn" class="text-xs bg-red-950 text-red-400 border border-red-800 hover:bg-red-900 px-3 py-1.5 rounded-lg transition font-semibold">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Clear Deck
+                    </button>
+                </div>
+
+                <!-- Leader Slot -->
+                <div id="leader-slot" class="bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 text-center flex flex-col items-center min-h-[120px] justify-center transition-all duration-300">
+                    <p class="text-xs text-gray-400 mb-2">👑 LEADER Card</p>
+                    <div id="leader-info" class="text-sm text-gray-500 italic">No leader selected yet (click "Set as Leader" under a Leader card on the right)</div>
+                </div>
+
+                <!-- Deck Progress Bar & Alerts -->
+                <div class="bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Cards in main deck:</span>
+                        <span class="font-bold text-white"><span id="total-count" class="text-red-500 text-lg">0</span> / 50 cards</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                        <div id="deck-progress" class="bg-red-500 h-3 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="validation-msg" class="text-xs text-yellow-400 bg-yellow-950/40 p-3 rounded-lg border border-yellow-900/50 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <span>Start building your deck by clicking "Set as Leader 👑" and adding cards to the deck</span>
+                    </div>
+                </div>
+
+                <!-- Active Deck List Cards -->
+                <h3 class="text-sm font-bold text-gray-400 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-ol"></i> Cards in Your Deck
+                </h3>
+                <div id="deck-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-5">
+                    <p class="text-sm text-gray-500 italic text-center py-8">Your deck is empty right now</p>
+                </div>
+
+                <!-- Export Area -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-export"></i> Deck List Text (TCGPlayer Format)
+                    </h3>
+                    <textarea id="export-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-red-500" rows="5" readonly placeholder="Your deck list will appear here automatically as you add cards"></textarea>
+                </div>
+            </div>
+
+            <!-- Cost Curve Analytics -->
+            <div id="chart-panel" class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
+                <h3 class="text-sm font-bold text-gray-400 mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-simple"></i> Deck Cost Curve
+                </h3>
+                <div id="cost-bars-container" class="flex items-end justify-between h-32 pt-4 px-2 border-b border-gray-800">
+                    <!-- Dynamic Bars -->
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 mt-2 font-mono px-2">
+                    <span>Cost: 0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10+</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Card Database Finder (7 Cols) -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- Filters -->
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-filter text-red-500"></i> Search & Filter
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-gray-400 block mb-1">Quick search (name / card number / effect):</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input id="search-input" type="text" placeholder="e.g. Zoro, Luffy, EB04..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Card type:</label>
+                        <select id="category-filter" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                            <option value="ALL">All Categories</option>
+                            <option value="Leader">Leader</option>
+                            <option value="Character">Character</option>
+                            <option value="Event">Event</option>
+                            <option value="Stage">Stage</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Grid Layout -->
+            <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[75vh] overflow-y-auto p-1">
+                <!-- Dynamically Rendered Cards -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Automatic high-quality fallback dynamic official image builder for Asia-TH servers
+        function getOfficialImage(id) {
+            // Clean ID space and dash
+            let cleanId = id.trim().toUpperCase();
+            // Format example: OP17-001 -> OP17-001.png
+            return `https://asia-th.onepiece-cardgame.com/images/cardlist/card/${cleanId}.png`;
+        }
+
+        // Generate full databases for EB-04 (001-010+ included), OP-16, OP-17
+        const CARDS_DATA = [];
+
+        // Generate EB-04 Cards (001 to 030)
+        const eb04Names = [
+            "Tony Tony.Chopper", "Cavendish", "Crocodile", "Mr.2(Bon.Kurei)", 
+            "Charlotte Awakening", "Kyros", "Rebecca", "Inazuma", "Monkey.D.Dragon", 
+            "Sabo", "Emporio.Ivankov", "Shiryu", "Van Augur", "Jesus Burgess"
+        ];
+        for (let i = 1; i <= 28; i++) {
+            let numStr = String(i).padStart(3, '0');
+            let id = `EB04-${numStr}`;
+            let name = eb04Names[(i-1) % eb04Names.length] + " (EB-04)";
+            let type = (i === 1 || i === 5) ? "Leader" : ((i % 5 === 0) ? "Event" : "Character");
+            let cost = (i % 7) + 1;
+            CARDS_DATA.push({ id, name, type, cost, set: "EB-04" });
+        }
+
+        // Generate OP-16 Cards (001 to 030)
+        for (let i = 1; i <= 35; i++) {
+            let numStr = String(i).padStart(3, '0');
+            let id = `OP16-${numStr}`;
+            let type = (i <= 3) ? "Leader" : ((i % 6 === 0) ? "Event" : "Character");
+            let cost = (i % 8) + i % 2;
+            CARDS_DATA.push({ id, name: `OP16 Fighter Hero Vol.${i}`, type, cost, set: "OP-16" });
+        }
+
+        // Generate OP-17 Cards (001 to 040)
+        for (let i = 1; i <= 40; i++) {
+            let numStr = String(i).padStart(3, '0');
+            let id = `OP17-${numStr}`;
+            let type = (i <= 4) ? "Leader" : ((i % 7 === 0) ? "Event" : "Character");
+            let cost = (i % 9) + 1;
+            CARDS_DATA.push({ id, name: `OP17 Strongest Warrior No.${i}`, type, cost, set: "OP-17" });
+        }
+
+        // State variables
+        let selectedLeader = null;
+        let mainDeck = {}; // id -> count
+
+        // Elements
+        const setSelector = document.getElementById('set-selector');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const cardsGrid = document.getElementById('cards-grid');
+        const leaderSlot = document.getElementById('leader-slot');
+        const leaderInfo = document.getElementById('leader-info');
+        const deckListContainer = document.getElementById('deck-list-container');
+        const totalCountEl = document.getElementById('total-count');
+        const deckProgressBar = document.getElementById('deck-progress');
+        const validationMsg = document.getElementById('validation-msg');
+        const exportTextarea = document.getElementById('export-textarea');
+        const costBarsContainer = document.getElementById('cost-bars-container');
+        const clearDeckBtn = document.getElementById('clear-deck-btn');
+
+        // Functions
+        function renderCards() {
+            const selectedSet = setSelector.value;
+            const searchTxt = searchInput.value.toLowerCase().trim();
+            const selectedCat = categoryFilter.value;
+
+            cardsGrid.innerHTML = '';
+
+            const filtered = CARDS_DATA.filter(card => {
+                if (selectedSet !== 'ALL' && card.set !== selectedSet) return false;
+                if (selectedCat !== 'ALL' && card.type !== selectedCat) return false;
+                if (searchTxt) {
+                    return card.id.toLowerCase().includes(searchTxt) || card.name.toLowerCase().includes(searchTxt);
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                cardsGrid.innerHTML = `<p class="col-span-full text-center text-gray-500 py-12 italic">No cards matched your filter criteria.</p>`;
+                return;
+            }
+
+            filtered.forEach(card => {
+                const imgUrl = getOfficialImage(card.id);
+                const cardDiv = document.createElement('div');
+                cardDiv.className = "bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden flex flex-col card-container p-2";
+                
+                // Card Display Image HTML with onError fallback to avoid broken image symbol
+                cardDiv.innerHTML = `
+                    <div class="relative aspect-[7/10] bg-black rounded-lg overflow-hidden group">
+                        <img src="${imgUrl}" alt="${card.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/280x400/242424/ff4b4b?text=${card.id}';">
+                        <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-center gap-2">
+                            <span class="text-xs font-bold text-red-500">${card.id}</span>
+                            <span class="text-xs font-semibold text-gray-200 line-clamp-2">${card.name}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700">${card.type}</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex flex-col gap-1.5 flex-1 justify-end">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-mono text-gray-400 font-bold">${card.id}</span>
+                            <span class="text-gray-500">Cost: ${card.cost || '-'}</span>
+                        </div>
+                        ${card.type === 'Leader' ? 
+                            `<button onclick="setAsLeader('${card.id}')" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs transition flex items-center justify-center gap-1">👑 Set Leader</button>` : 
+                            `<div class="grid grid-cols-2 gap-1">
+                                <button onclick="addToDeck('${card.id}')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold py-1 px-1 rounded text-xs transition border border-gray-700"><i class="fa-solid fa-plus text-red-500"></i> Add</button>
+                                <button onclick="removeFromDeck('${card.id}')" class="bg-gray-900 hover:bg-gray-800 text-gray-400 py-1 px-1 rounded text-xs transition border border-gray-800">Remove</button>
+                             </div>`
+                        }
+                    </div>
+                `;
+                cardsGrid.appendChild(cardDiv);
+            });
+        }
+
+        window.setAsLeader = function(id) {
+            const card = CARDS_DATA.find(c => c.id === id);
+            if (!card) return;
+            selectedLeader = card;
+            
+            leaderSlot.className = "bg-red-950/20 rounded-xl p-4 border border-red-500/50 text-center flex flex-col items-center justify-center min-h-[120px] transition-all duration-300 shadow-md";
+            leaderSlot.innerHTML = `
+                <p class="text-xs text-red-400 font-bold mb-1">👑 ACTIVE LEADER</p>
+                <div class="flex items-center gap-3 w-full text-left">
+                    <img src="${getOfficialImage(card.id)}" class="w-14 h-20 object-cover rounded border border-red-500/30 shadow" onerror="this.onerror=null; this.src='https://placehold.co/100x140/242424/ff4b4b?text=${card.id}';">
+                    <div>
+                        <div class="font-bold text-white text-sm">${card.name}</div>
+                        <div class="text-xs text-red-400 font-mono mt-0.5">${card.id}</div>
+                    </div>
+                </div>
+            `;
+            updateDeckDisplay();
+        };
+
+        window.addToDeck = function(id) {
+            const card = CARDS_DATA.find(c => c.id === id);
+            if (!card) return;
+            
+            const currentTotal = Object.values(mainDeck).reduce((a, b) => a + b, 0);
+            if (currentTotal >= 50) {
+                alert("Your deck already has the maximum size limit of 50 cards!");
+                return;
+            }
+
+            if (!mainDeck[id]) mainDeck[id] = 0;
+            if (mainDeck[id] >= 4) {
+                alert("You cannot add more than 4 copies of the same card!");
+                return;
+            }
+
+            mainDeck[id]++;
+            updateDeckDisplay();
+        };
+
+        window.removeFromDeck = function(id) {
+            if (!mainDeck[id]) return;
+            mainDeck[id]--;
+            if (mainDeck[id] <= 0) {
+                delete mainDeck[id];
+            }
+            updateDeckDisplay();
+        };
+
+        function updateDeckDisplay() {
+            let total = 0;
+            deckListContainer.innerHTML = '';
+
+            const activeIds = Object.keys(mainDeck).sort();
+            
+            if (activeIds.length === 0) {
+                deckListContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-8">Your deck is empty right now</p>`;
+            } else {
+                activeIds.forEach(id => {
+                    const card = CARDS_DATA.find(c => c.id === id);
+                    const count = mainDeck[id];
+                    total += count;
+
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between bg-[#242424] px-3 py-2 rounded-lg border border-gray-800 text-xs gap-2";
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2 truncate">
+                            <span class="font-bold text-red-500 w-4">${count}x</span>
+                            <span class="font-mono text-gray-400 font-semibold select-all">${card.id}</span>
+                            <span class="text-gray-200 truncate font-medium">${card.name}</span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="addToDeck('${card.id}')" class="w-6 h-6 rounded bg-gray-800 text-gray-300 font-bold hover:bg-gray-700">+</button>
+                            <button onclick="removeFromDeck('${card.id}')" class="w-6 h-6 rounded bg-gray-900 text-gray-500 hover:text-red-400 hover:bg-gray-800">-</button>
+                        </div>
+                    `;
+                    deckListContainer.appendChild(row);
+                });
+            }
+
+            totalCountEl.textContent = total;
+            const percentage = Math.min((total / 50) * 100, 100);
+            deckProgressBar.style.width = `${percentage}%`;
+
+            // Validation message state
+            if (!selectedLeader) {
+                validationMsg.className = "text-xs text-yellow-400 bg-yellow-950/40 p-3 rounded-lg border border-yellow-900/50 flex items-start gap-2";
+                validationMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation mt-0.5 text-yellow-500"></i> <span>Deck needs a <strong>Leader card</strong> to be legally playable.</span>`;
+            } else if (total < 50) {
+                validationMsg.className = "text-xs text-blue-400 bg-blue-950/40 p-3 rounded-lg border border-blue-900/50 flex items-start gap-2";
+                validationMsg.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin mt-0.5"></i> <span>Deck building in progress (${total}/50). Add ${50 - total} more cards!</span>`;
+            } else {
+                validationMsg.className = "text-xs text-green-400 bg-green-950/40 p-3 rounded-lg border border-green-900/50 flex items-start gap-2";
+                validationMsg.innerHTML = `<i class="fa-solid fa-circle-check mt-0.5 text-green-500"></i> <span>Deck is legal and complete! 50 cards loaded successfully.</span>`;
+            }
+
+            // Export logic (TCGPlayer structure format)
+            let exportTxt = "";
+            if (selectedLeader) {
+                exportTxt += `1x ${selectedLeader.id} ${selectedLeader.name}
+`;
+            }
+            activeIds.forEach(id => {
+                const card = CARDS_DATA.find(c => c.id === id);
+                exportTxt += `${mainDeck[id]}x ${card.id} ${card.name}
+`;
+            });
+            exportTextarea.value = exportTxt;
+
+            updateCostCurve();
+        }
+
+        function updateCostCurve() {
+            const costCounts = Array(11).fill(0); // 0 to 10+
+            Object.keys(mainDeck).forEach(id => {
+                const card = CARDS_DATA.find(c => c.id === id);
+                const count = mainDeck[id];
+                let cost = card.cost || 0;
+                if (cost > 10) cost = 10;
+                costCounts[cost] += count;
+            });
+
+            const maxCount = Math.max(...costCounts, 1);
+            costBarsContainer.innerHTML = '';
+            
+            costCounts.forEach((count, i) => {
+                const pct = (count / maxCount) * 100;
+                const bar = document.createElement('div');
+                bar.className = "flex flex-col items-center w-full group relative";
+                bar.innerHTML = `
+                    <div class="absolute -top-6 text-[10px] text-red-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity bg-black px-1 rounded border border-gray-800">${count}</div>
+                    <div class="w-4/5 bg-gradient-to-t from-red-700 to-red-500 rounded-t-sm transition-all duration-500" style="height: ${pct ? Math.max(pct, 4) : 0}%"></div>
+                `;
+                costBarsContainer.appendChild(bar);
+            });
+        }
+
+        clearDeckBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to completely reset and clear your current deck?")) {
+                mainDeck = {};
+                selectedLeader = null;
+                leaderSlot.className = "bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 text-center flex flex-col items-center min-h-[120px] justify-center transition-all duration-300";
+                leaderSlot.innerHTML = `
+                    <p class="text-xs text-gray-400 mb-2">👑 LEADER Card</p>
+                    <div id="leader-info" class="text-sm text-gray-500 italic">No leader selected yet (click "Set as Leader" under a Leader card on the right)</div>
+                `;
+                updateDeckDisplay();
+            }
+        });
+
+        // Listeners
+        setSelector.addEventListener('change', renderCards);
+        searchInput.addEventListener('input', renderCards);
+        categoryFilter.addEventListener('change', renderCards);
+
+        // Initial setup
+        renderCards();
+        updateDeckDisplay();
+    </script>
+</body>
+</html>
