@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Strictly prevent card image blocking -->
+    <meta name="referrer" content="no-referrer">
+    <title>Card Kaizoku - OPTCG Deck Builder</title>
+    <!-- Load Tailwind CSS and Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #ff4b4b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e03e3e; }
+        .card-container {
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .card-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(255, 75, 75, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-[#121212] text-gray-100 min-h-screen font-sans antialiased">
+
+    <!-- Header -->
+    <header class="bg-[#1a1a1a] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl">🏴‍☠️</span>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wider text-red-500 font-mono">CARD KAIZOKU</h1>
+                    <p class="text-xs text-gray-400">One Piece TCG Deck Builder — fully self-contained, runs on GitHub Pages</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <label for="set-selector" class="text-sm font-semibold text-gray-400">Card Set:</label>
+                <select id="set-selector" class="bg-[#242424] text-white border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
+                    <option value="loading">Loading set list...</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: My Deck Sheet (5 Cols) -->
+        <section class="lg:col-span-5 space-y-6">
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 h-fit shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-red-500 flex items-center gap-2">
+                        <i class="fa-solid fa-box-archive"></i> My Deck
+                    </h2>
+                    <button id="clear-deck-btn" class="text-xs bg-red-950 text-red-400 border border-red-800 hover:bg-red-900 px-3 py-1.5 rounded-lg transition font-semibold">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Clear Deck
+                    </button>
+                </div>
+
+                <!-- Leader Slot -->
+                <div id="leader-slot" class="bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 text-center flex flex-col items-center min-h-[120px] justify-center transition-all duration-300">
+                    <p class="text-xs text-gray-400 mb-2">👑 LEADER Card</p>
+                    <div id="leader-info" class="text-sm text-gray-500 italic">No leader selected yet (click "Set as Leader" under a Leader card on the right)</div>
+                </div>
+
+                <!-- Deck Progress Bar & Alerts -->
+                <div class="bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Cards in main deck:</span>
+                        <span class="font-bold text-white"><span id="total-count" class="text-red-500 text-lg">0</span> / 50 cards</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                        <div id="deck-progress" class="bg-red-500 h-3 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="validation-msg" class="text-xs text-yellow-400 bg-yellow-950/40 p-3 rounded-lg border border-yellow-900/50 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <span>Start building your deck by clicking "Set as Leader 👑" and adding cards to the deck</span>
+                    </div>
+                </div>
+
+                <!-- Active Deck List Cards -->
+                <h3 class="text-sm font-bold text-gray-400 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-ol"></i> Cards in Your Deck
+                </h3>
+                <div id="deck-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-5">
+                    <p class="text-sm text-gray-500 italic text-center py-8">Your deck is empty right now</p>
+                </div>
+
+                <!-- Export Area -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-export"></i> Deck List Text (TCGPlayer Format)
+                    </h3>
+                    <textarea id="export-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-red-500" rows="5" readonly placeholder="Your deck list will appear here automatically as you add cards"></textarea>
+                </div>
+            </div>
+
+            <!-- Cost Curve Analytics -->
+            <div id="chart-panel" class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md hidden">
+                <h3 class="text-sm font-bold text-gray-400 mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-simple"></i> Deck Cost Curve
+                </h3>
+                <div id="cost-bars-container" class="flex items-end justify-between h-32 pt-4 px-2 border-b border-gray-800">
+                    <!-- Dynamic Bars -->
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 mt-2 font-mono px-2">
+                    <span>Cost: 0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10+</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Card Database Finder (7 Cols) -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- Filters -->
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-filter text-red-500"></i> Search & Filter
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-gray-400 block mb-1">Quick search (name / card number / effect):</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input id="search-input" type="text" placeholder="e.g. Zoro, Monkey D. Luffy, OP16..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Card type:</label>
+                        <select id="category-filter" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                            <option value="ALL">All types</option>
+                            <option value="Leader">Leader</option>
+                            <option value="Character">Character</option>
+                            <option value="Event">Event</option>
+                            <option value="Stage">Stage</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loader Spinner -->
+            <div id="loading-spinner" class="hidden flex-col items-center justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mb-4"></div>
+                <p class="text-sm text-gray-400">Loading card set from the cloud server...</p>
+            </div>
+
+            <!-- Card Grid -->
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-id-card text-red-500"></i> Cards in Set
+                    </h2>
+                    <span id="card-count" class="text-xs text-gray-300 bg-[#2d2d2d] px-3 py-1 rounded-full font-semibold">Connecting to database...</span>
+                </div>
+                
+                <div id="card-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <!-- Cards render dynamically -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Image Lightbox: click any card image to view it larger -->
+    <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 z-[100] items-center justify-center p-4 cursor-zoom-out" onclick="closeImageLightbox()">
+        <button onclick="closeImageLightbox()" class="absolute top-4 right-4 md:top-6 md:right-6 text-white text-3xl hover:text-red-500 transition z-[101]" aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="max-w-md w-full" onclick="event.stopPropagation()">
+            <img id="lightbox-img" src="" alt="" referrerpolicy="no-referrer" class="w-full h-auto rounded-xl shadow-2xl border border-gray-700 bg-[#111]">
+            <p id="lightbox-caption" class="text-center text-sm text-gray-300 mt-3"></p>
+        </div>
+    </div>
+
+    <!-- JavaScript logic -->
+    <script>
+        // Primary + fallback sources (jsDelivr sometimes rate-limits or is blocked by
+        // certain networks/ad-blockers, so we fall back to raw.githubusercontent.com)
+        const PACKS_URLS = [
+            "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/packs.json",
+            "https://raw.githubusercontent.com/michalkiral/optcg-data/main/data/packs.json"
+        ];
+        const cardsUrlsFor = (setCode) => [
+            `https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/cards/${setCode}.json`,
+            `https://raw.githubusercontent.com/michalkiral/optcg-data/main/data/cards/${setCode}.json`
+        ];
+
+        // Try a list of URLs in order, return the first one that succeeds
+        async function fetchFirstOk(urls) {
+            let lastError = null;
+            for (const url of urls) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status} at ${url}`);
+                    return await res.json();
+                } catch (err) {
+                    console.warn(`Fetch failed for ${url}:`, err);
+                    lastError = err;
+                }
+            }
+            throw lastError || new Error("All sources failed");
+        }
+        
+        let allCards = [];
+        let deck = {}; // {card_id: count}
+        let leader = null;
+
+        // Normalize a set/card code for comparison: strips dashes, uppercases
+        // e.g. "op-14" -> "OP14", "EB04" -> "EB04"
+        function normCode(code) {
+            return (code || "").replace(/-/g, "").toUpperCase();
+        }
+
+        // Find the best matching pack for a desired display code (e.g. "OP-14").
+        // 1) Exact match (normalized) if the source data already lists it standalone.
+        // 2) Otherwise fall back to a combined pack whose code contains it
+        //    (e.g. English "OP14-EB04" boxes bundle OP-14 + EB-04 together —
+        //    real Bandai product structure, not a data bug). In that case we
+        //    still surface it as its own dropdown entry, and filter the cards
+        //    down to just that prefix after loading (see loadSetCards).
+        function findPackForCode(packs, desiredCode) {
+            const target = normCode(desiredCode);
+            let exact = packs.find(p => normCode(p.code) === target);
+            if (exact) return { pack: exact, needsPrefixFilter: false };
+            let combined = packs.find(p => normCode(p.code).includes(target));
+            if (combined) return { pack: combined, needsPrefixFilter: true };
+            return null;
+        }
+
+        // Load the full list of card sets to populate the dropdown
+        async function fetchPacks() {
+            try {
+                const packs = await fetchFirstOk(PACKS_URLS);
+                
+                const selector = document.getElementById("set-selector");
+                selector.innerHTML = "";
+                
+                // Pull out the sets the user is likely to want first, and show them at the top.
+                // OP-14 and OP-15's English boxes bundle in EB-04 cards under combined
+                // codes like "OP14-EB04" / "OP15-EB04". We still split those into three
+                // separate, independently selectable entries (OP-14 / OP-15 / EB-04) —
+                // each one loads the combined data file but is narrowed down to just its
+                // own cards afterward (see loadSetCards + needsPrefixFilter below).
+                const priorityPacks = ["OP-17", "OP-16", "OP-15", "OP-14", "EB-04", "OP-01"];
+                const usedPackFiles = new Set(); // underlying pack.code values already shown via priority list
+
+                // Show priority sets at the very top
+                priorityPacks.forEach(code => {
+                    const found = findPackForCode(packs, code);
+                    if (found) {
+                        const opt = document.createElement("option");
+                        opt.value = found.pack.code;
+                        if (found.needsPrefixFilter) {
+                            opt.dataset.filterPrefix = normCode(code);
+                        }
+                        opt.innerText = `🔥 ${code} - ${found.pack.name}`;
+                        selector.appendChild(opt);
+                        usedPackFiles.add(found.pack.code);
+                    }
+                });
+
+                // Then show every other set in the system (skip ones already offered above
+                // via the split priority entries, so the combined file isn't listed twice)
+                packs.forEach(p => {
+                    if (!usedPackFiles.has(p.code)) {
+                        const opt = document.createElement("option");
+                        opt.value = p.code;
+                        opt.innerText = `${p.code} - ${p.name}`;
+                        selector.appendChild(opt);
+                    }
+                });
+
+                // Immediately load cards for the first selected set
+                loadSetCards();
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("set-selector").innerHTML = `<option value="err">Error loading set list</option>`;
+                document.getElementById("card-grid").innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-400 bg-red-950/20 rounded-xl border border-red-900/50 p-6">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+                        <p class="text-sm font-bold">Could not load the set list</p>
+                        <p class="text-xs text-gray-500 mt-2 font-mono break-all">${err && err.message ? err.message : err}</p>
+                        <p class="text-xs text-gray-500 mt-2">This usually means your network/browser is blocking requests to cdn.jsdelivr.net and raw.githubusercontent.com (corporate firewall, ad-blocker, or a sandboxed preview). Try opening this file directly in a normal browser tab, or check the browser console (F12) for the full error.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Dynamically load all card data for the currently selected set only
+        async function loadSetCards() {
+            const selector = document.getElementById("set-selector");
+            const setCode = selector.value;
+            if (!setCode || setCode === "loading" || setCode === "err") return;
+
+            // If this option is one of the split OP-14 / OP-15 / EB-04 entries, it carries
+            // a data-filter-prefix so we only keep cards whose id belongs to that sub-set.
+            const selectedOption = selector.selectedOptions[0];
+            const filterPrefix = selectedOption ? selectedOption.dataset.filterPrefix : "";
+
+            const grid = document.getElementById("card-grid");
+            const spinner = document.getElementById("loading-spinner");
+            const countLabel = document.getElementById("card-count");
+
+            grid.innerHTML = "";
+            spinner.classList.remove("hidden");
+            countLabel.innerText = "Downloading...";
+
+            try {
+                let fetchedCards = await fetchFirstOk(cardsUrlsFor(setCode));
+
+                if (filterPrefix) {
+                    const narrowed = fetchedCards.filter(c => c.id && normCode(c.id).startsWith(filterPrefix));
+                    // Safety fallback: if the id prefixes in the data don't actually match what
+                    // we expected, don't leave the user staring at an empty grid — show everything
+                    // from the combined set instead of silently filtering it all away.
+                    fetchedCards = narrowed.length > 0 ? narrowed : fetchedCards;
+                }
+
+                allCards = fetchedCards;
+                spinner.classList.add("hidden");
+                filterAndRender();
+
+            } catch (err) {
+                console.error(err);
+                spinner.classList.add("hidden");
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-400 bg-red-950/20 rounded-xl border border-red-900/50 p-6">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+                        <p class="text-sm font-bold">Could not fetch data for set ${setCode} right now</p>
+                        <p class="text-xs text-gray-500 mt-2 font-mono break-all">${err && err.message ? err.message : err}</p>
+                        <p class="text-xs text-gray-500 mt-1">Please try another set, reload the page, or check the browser console (F12) for details</p>
+                    </div>
+                `;
+                countLabel.innerText = "Failed to load";
+            }
+        }
+
+        function filterAndRender() {
+            const searchVal = document.getElementById("search-input").value.toLowerCase().trim();
+            const catVal = document.getElementById("category-filter").value;
+
+            const filtered = allCards.filter(card => {
+                // Filter by category
+                if (catVal !== "ALL" && card.category !== catVal) return false;
+
+                // Search by text
+                if (searchVal !== "") {
+                    const name = card.name ? card.name.toLowerCase() : "";
+                    const cid = card.id ? card.id.toLowerCase() : "";
+                    const effect = card.effect ? card.effect.toLowerCase() : "";
+                    if (!name.includes(searchVal) && !cid.includes(searchVal) && !effect.includes(searchVal)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            document.getElementById("card-count").innerText = `Showing ${filtered.length} cards`;
+            renderGrid(filtered);
+        }
+
+        function renderGrid(cardsList) {
+            const grid = document.getElementById("card-grid");
+            grid.innerHTML = "";
+
+            if (cardsList.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500 italic text-sm">No cards match this filter</div>`;
+                return;
+            }
+
+            cardsList.forEach(card => {
+                const isLeader = card.category === "Leader";
+                const currentCount = deck[card.id] || 0;
+                
+                // Resolve the image URL, falling back to the official Bandai card list
+                let imgUrl = card.image ? card.image : `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id}.png`;
+                
+                // Avoid Bandai's image blocking in every scenario
+                imgUrl = imgUrl.replace("asia-en.onepiece-cardgame.com", "en.onepiece-cardgame.com");
+
+                const cardDiv = document.createElement("div");
+                cardDiv.className = "card-container bg-[#1e1e1e] border border-gray-800 rounded-xl p-3.5 flex flex-col justify-between shadow-sm relative";
+                
+                cardDiv.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="overflow-hidden rounded-lg bg-[#111] aspect-[3/4] cursor-zoom-in group relative">
+                            <img src="${imgUrl}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full h-full object-contain" onerror="this.src='https://en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <i class="fa-solid fa-magnifying-glass-plus text-white text-lg drop-shadow"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold truncate text-white" title="${card.name}">${card.name}</h4>
+                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">${card.id} | ${card.category}</p>
+                            <p class="text-[10px] font-bold text-red-500">${card.colors ? card.colors.join('/') : ''}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        ${isLeader ? 
+                            `<button onclick="setLeader('${card.id}')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2 px-2.5 rounded-lg transition shadow-md flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-crown"></i> Set as Leader
+                             </button>` :
+                            `<button onclick="addToDeck('${card.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 px-2.5 rounded-lg transition flex justify-between items-center shadow-md">
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-plus"></i> Add to Deck</span>
+                                <span class="bg-red-950/70 border border-red-800 text-white px-2 py-0.5 rounded-full text-[10px] min-w-[20px] text-center">${currentCount}</span>
+                            </button>`
+                        }
+                    </div>
+                `;
+
+                // Click the image (not the buttons) to view it full-size in the lightbox
+                const imgWrapper = cardDiv.querySelector(".cursor-zoom-in");
+                imgWrapper.addEventListener("click", () => {
+                    openImageLightbox(imgUrl, `${card.name} (${card.id})`);
+                });
+
+                grid.appendChild(cardDiv);
+            });
+        }
+
+        // Open the lightbox so the user can view any card image at full size
+        window.openImageLightbox = function(imgUrl, caption) {
+            const modal = document.getElementById("image-lightbox");
+            const img = document.getElementById("lightbox-img");
+            img.src = imgUrl;
+            img.alt = caption || "";
+            document.getElementById("lightbox-caption").innerText = caption || "";
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        };
+
+        window.closeImageLightbox = function() {
+            const modal = document.getElementById("image-lightbox");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        };
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeImageLightbox();
+        });
+
+        window.setLeader = function(cardId) {
+            // Find the leader card in the current list
+            const card = allCards.find(c => c.id === cardId);
+            if (!card) return;
+            leader = card;
+
+            let imgUrl = card.image ? card.image : `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id}.png`;
+            imgUrl = imgUrl.replace("asia-en.onepiece-cardgame.com", "en.onepiece-cardgame.com");
+            
+            const slot = document.getElementById("leader-slot");
+            slot.innerHTML = `
+                <p class="text-xs text-amber-500 font-bold mb-2">👑 ACTIVE LEADER</p>
+                <div class="w-28 overflow-hidden rounded-lg shadow-lg mb-2 border border-amber-500 bg-[#111] aspect-[3/4] cursor-zoom-in">
+                    <img src="${imgUrl}" referrerpolicy="no-referrer" class="w-full h-full object-contain" onerror="this.src='https://en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
+                </div>
+                <div class="text-sm font-bold text-amber-400">${card.name}</div>
+                <div class="text-[10px] text-gray-400 font-mono mt-0.5">${card.id} [${card.colors.join('/')}]</div>
+                <button onclick="removeLeader()" class="mt-3 text-[10px] bg-red-950/80 text-red-400 hover:bg-red-900 hover:text-white border border-red-800 rounded px-3 py-1 transition font-bold">
+                    <i class="fa-solid fa-xmark mr-1"></i> Remove Leader
+                </button>
+            `;
+
+            slot.querySelector(".cursor-zoom-in").addEventListener("click", () => {
+                openImageLightbox(imgUrl, `${card.name} (${card.id})`);
+            });
+
+            updateDeckUI();
+        }
+
+        window.removeLeader = function() {
+            leader = null;
+            const slot = document.getElementById("leader-slot");
+            slot.innerHTML = `
+                <p class="text-xs text-gray-400 mb-2">👑 LEADER Card</p>
+                <div id="leader-info" class="text-sm text-gray-500 italic">No leader selected yet (click "Set as Leader" under a Leader card on the right)</div>
+            `;
+            updateDeckUI();
+        }
+
+        window.addToDeck = function(cardId) {
+            const currentCount = deck[cardId] || 0;
+            const totalCards = Object.values(deck).reduce((a, b) => a + b, 0);
+
+            if (totalCards >= 50) {
+                alert("Your main deck is already full at 50 cards!");
+                return;
+            }
+            if (currentCount >= 4) {
+                alert("Official rule: you can only include up to 4 copies of a card with the same number in your deck!");
+                return;
+            }
+
+            deck[cardId] = currentCount + 1;
+            updateDeckUI();
+            filterAndRender();
+        };
+
+        window.subFromDeck = function(cardId) {
+            if (deck[cardId]) {
+                deck[cardId] -= 1;
+                if (deck[cardId] <= 0) {
+                    delete deck[cardId];
+                }
+                updateDeckUI();
+                filterAndRender();
+            }
+        };
+
+        function updateDeckUI() {
+            const listContainer = document.getElementById("deck-list-container");
+            listContainer.innerHTML = "";
+
+            const total = Object.values(deck).reduce((a, b) => a + b, 0);
+            document.getElementById("total-count").innerText = total;
+            document.getElementById("deck-progress").style.width = `${(total / 50) * 100}%`;
+
+            if (Object.keys(deck).length === 0) {
+                listContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-8">Your deck is empty right now</p>`;
+            } else {
+                Object.entries(deck).forEach(([cardId, count]) => {
+                    const card = allCards.find(c => c.id === cardId);
+                    const name = card ? card.name : cardId;
+                    
+                    // Check whether this card's color matches the Leader's color
+                    let colorError = "";
+                    if (leader && card) {
+                        const hasMatchingColor = card.colors.some(c => leader.colors.includes(c));
+                        if (!hasMatchingColor) {
+                            colorError = `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[9px] bg-red-950 text-red-400 font-bold border border-red-800">Color mismatch ⚠️</span>`;
+                        }
+                    }
+
+                    const row = document.createElement("div");
+                    row.className = "flex justify-between items-center bg-[#242424] px-3.5 py-2.5 rounded-lg border border-gray-800 hover:border-gray-700 transition";
+                    row.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="text-xs font-semibold text-white truncate">${name}</div>
+                            <div class="text-[10px] text-gray-400 font-mono">${cardId} ${colorError}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="subFromDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">➖</button>
+                            <span class="text-xs font-bold text-red-400 font-mono w-4 text-center">${count}</span>
+                            <button onclick="addToDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">➕</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(row);
+                });
+            }
+
+            // Show the Cost Curve panel once there's data in the deck
+            const chartPanel = document.getElementById("chart-panel");
+            if (total > 0) {
+                chartPanel.classList.remove("hidden");
+                renderCostCurve();
+            } else {
+                chartPanel.classList.add("hidden");
+            }
+
+            // Validate the deck and notify the user
+            const validationBox = document.getElementById("validation-msg");
+            if (total < 50) {
+                validationBox.innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <span>You still need <strong>${50 - total} more card(s)</strong> to reach the required 50-card deck</span>
+                `;
+                validationBox.className = "text-xs text-yellow-400 bg-yellow-950/40 p-2.5 rounded-lg border border-yellow-900/50 flex items-start gap-2";
+            } else if (total === 50) {
+                validationBox.innerHTML = `
+                    <i class="fa-solid fa-circle-check mt-0.5"></i>
+                    <span>This deck is complete! All 50 cards are in — ready for official play</span>
+                `;
+                validationBox.className = "text-xs text-green-400 bg-green-950/40 p-2.5 rounded-lg border border-green-900/50 flex items-start gap-2";
+            }
+
+            // Build the deck list for export in TCGPlayer format
+            const textLines = [];
+            if (leader) {
+                textLines.push(`1x ${leader.id}`);
+            }
+            Object.entries(deck).forEach(([id, count]) => {
+                textLines.push(`${count}x ${id}`);
+            });
+            document.getElementById("export-textarea").value = textLines.join("\n");
+        }
+
+        // Render the Cost Curve as a plain, reliable HTML/CSS bar chart
+        function renderCostCurve() {
+            const container = document.getElementById("cost-bars-container");
+            container.innerHTML = "";
+
+            const costCounts = Array(11).fill(0); // Cost 0 - 10
+            
+            Object.entries(deck).forEach(([cardId, count]) => {
+                const card = allCards.find(c => c.id === cardId);
+                if (card && card.cost !== null) {
+                    const costIdx = Math.min(card.cost, 10);
+                    costCounts[costIdx] += count;
+                }
+            });
+
+            const maxQuantity = Math.max(...costCounts, 1);
+
+            costCounts.forEach((q, idx) => {
+                const heightPercent = (q / maxQuantity) * 100;
+                const bar = document.createElement("div");
+                bar.className = "flex flex-col items-center flex-1 group relative";
+                
+                bar.innerHTML = `
+                    <div class="text-[9px] text-gray-400 font-bold mb-1 opacity-0 group-hover:opacity-100 transition absolute -top-4">${q}</div>
+                    <div class="bg-red-600 hover:bg-red-500 w-4 sm:w-6 rounded-t transition-all duration-300" style="height: ${heightPercent}%;"></div>
+                `;
+                container.appendChild(bar);
+            });
+        }
+
+        // Clear everything and reset the deck
+        document.getElementById("clear-deck-btn").addEventListener("click", () => {
+            deck = {};
+            removeLeader();
+            filterAndRender();
+        });
+
+        // Wire up control events
+        document.getElementById("set-selector").addEventListener("change", loadSetCards);
+        document.getElementById("search-input").addEventListener("input", filterAndRender);
+        document.getElementById("category-filter").addEventListener("change", filterAndRender);
+
+        // Kick off loading the set list on startup
+        fetchPacks();
+    </script>
+</body>
+</html>
