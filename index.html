@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- à¸›à¹‰à¸­à¸‡à¸à¸±à¸™à¸à¸²à¸£à¸šà¸¥à¹‡à¸­à¸à¸£à¸¹à¸›à¸ à¸²à¸žà¸à¸²à¸£à¹Œà¸”à¸­à¸¢à¹ˆà¸²à¸‡à¹€à¸”à¹‡à¸”à¸‚à¸²à¸” -->
+    <!-- Strictly prevent card image blocking -->
     <meta name="referrer" content="no-referrer">
     <title>Card Kaizoku - OPTCG Deck Builder</title>
-    <!-- à¹‚à¸«à¸¥à¸” Tailwind CSS à¹à¸¥à¸° Font Awesome -->
+    <!-- Load Tailwind CSS and Font Awesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -29,16 +29,16 @@
     <header class="bg-[#1a1a1a] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-lg">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <span class="text-4xl">ðŸ´â€â˜ ï¸</span>
+                <span class="text-4xl">🏴‍☠️</span>
                 <div>
                     <h1 class="text-2xl font-bold tracking-wider text-red-500 font-mono">CARD KAIZOKU</h1>
-                    <p class="text-xs text-gray-400">à¸£à¸°à¸šà¸šà¸ˆà¸±à¸”à¹€à¸”à¹‡à¸„à¸à¸²à¸£à¹Œà¸” One Piece TCG à¹€à¸§à¸­à¸£à¹Œà¸Šà¸±à¸™à¸ªà¸¡à¸šà¸¹à¸£à¸“à¹Œà¹à¸šà¸šà¸£à¸±à¸™à¸šà¸™ GitHub Pages</p>
+                    <p class="text-xs text-gray-400">One Piece TCG Deck Builder — fully self-contained, runs on GitHub Pages</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <label for="set-selector" class="text-sm font-semibold text-gray-400">à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”:</label>
+                <label for="set-selector" class="text-sm font-semibold text-gray-400">Card Set:</label>
                 <select id="set-selector" class="bg-[#242424] text-white border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
-                    <option value="loading">à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸£à¸²à¸¢à¸Šà¸·à¹ˆà¸­à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”...</option>
+                    <option value="loading">Loading set list...</option>
                 </select>
             </div>
         </div>
@@ -52,55 +52,55 @@
             <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 h-fit shadow-md">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-red-500 flex items-center gap-2">
-                        <i class="fa-solid class font-awesome fa-box-archive"></i> à¹€à¸”à¹‡à¸„à¸‚à¸­à¸‡à¸‰à¸±à¸™
+                        <i class="fa-solid fa-box-archive"></i> My Deck
                     </h2>
                     <button id="clear-deck-btn" class="text-xs bg-red-950 text-red-400 border border-red-800 hover:bg-red-900 px-3 py-1.5 rounded-lg transition font-semibold">
-                        <i class="fa-solid fa-trash-can mr-1"></i> à¸¥à¹‰à¸²à¸‡à¹€à¸”à¹‡à¸„à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”
+                        <i class="fa-solid fa-trash-can mr-1"></i> Clear Deck
                     </button>
                 </div>
 
                 <!-- Leader Slot -->
                 <div id="leader-slot" class="bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 text-center flex flex-col items-center min-h-[120px] justify-center transition-all duration-300">
-                    <p class="text-xs text-gray-400 mb-2">ðŸ‘‘ LEADER à¸à¸²à¸£à¹Œà¸”à¸«à¸±à¸§à¸«à¸™à¹‰à¸²</p>
-                    <div id="leader-info" class="text-sm text-gray-500 italic">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¹€à¸¥à¸·à¸­à¸à¸¥à¸µà¸”à¹€à¸”à¸­à¸£à¹Œ (à¸à¸”à¸›à¸¸à¹ˆà¸¡à¹€à¸¥à¸·à¸­à¸à¹ƒà¸•à¹‰à¸à¸²à¸£à¹Œà¸”à¸«à¸±à¸§à¸«à¸™à¹‰à¸²à¸à¸±à¹ˆà¸‡à¸‚à¸§à¸²)</div>
+                    <p class="text-xs text-gray-400 mb-2">👑 LEADER Card</p>
+                    <div id="leader-info" class="text-sm text-gray-500 italic">No leader selected yet (click "Set as Leader" under a Leader card on the right)</div>
                 </div>
 
                 <!-- Deck Progress Bar & Alerts -->
                 <div class="bg-[#242424] rounded-xl p-4 border border-gray-700 mb-5 space-y-3">
                     <div class="flex justify-between text-sm">
-                        <span class="text-gray-400">à¸à¸²à¸£à¹Œà¸”à¹ƒà¸™à¹€à¸”à¹‡à¸„à¸«à¸¥à¸±à¸:</span>
-                        <span class="font-bold text-white"><span id="total-count" class="text-red-500 text-lg">0</span> / 50 à¹ƒà¸š</span>
+                        <span class="text-gray-400">Cards in main deck:</span>
+                        <span class="font-bold text-white"><span id="total-count" class="text-red-500 text-lg">0</span> / 50 cards</span>
                     </div>
                     <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
                         <div id="deck-progress" class="bg-red-500 h-3 transition-all duration-300" style="width: 0%"></div>
                     </div>
                     <div id="validation-msg" class="text-xs text-yellow-400 bg-yellow-950/40 p-3 rounded-lg border border-yellow-900/50 flex items-start gap-2">
                         <i class="fa-solid fa-circle-info mt-0.5"></i>
-                        <span>à¹€à¸£à¸´à¹ˆà¸¡à¸ˆà¸±à¸”à¹€à¸”à¹‡à¸„à¹‚à¸”à¸¢à¸à¸²à¸£à¸„à¸¥à¸´à¸ "à¹€à¸¥à¸·à¸­à¸à¹€à¸›à¹‡à¸™ Leader ðŸ‘‘" à¹à¸¥à¸°à¹€à¸žà¸´à¹ˆà¸¡à¸à¸²à¸£à¹Œà¸”à¸¥à¸‡à¹€à¸”à¹‡à¸„</span>
+                        <span>Start building your deck by clicking "Set as Leader 👑" and adding cards to the deck</span>
                     </div>
                 </div>
 
                 <!-- Active Deck List Cards -->
                 <h3 class="text-sm font-bold text-gray-400 mb-2 flex items-center gap-1.5">
-                    <i class="fa-solid fa-list-ol"></i> à¸£à¸²à¸¢à¸à¸²à¸£à¸à¸²à¸£à¹Œà¸”à¹ƒà¸™à¹€à¸”à¹‡à¸„à¸‚à¸­à¸‡à¸„à¸¸à¸“
+                    <i class="fa-solid fa-list-ol"></i> Cards in Your Deck
                 </h3>
                 <div id="deck-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-5">
-                    <p class="text-sm text-gray-500 italic text-center py-8">à¹€à¸”à¹‡à¸„à¸‚à¸­à¸‡à¸„à¸¸à¸“à¸§à¹ˆà¸²à¸‡à¹€à¸›à¸¥à¹ˆà¸²à¹ƒà¸™à¸•à¸­à¸™à¸™à¸µà¹‰</p>
+                    <p class="text-sm text-gray-500 italic text-center py-8">Your deck is empty right now</p>
                 </div>
 
                 <!-- Export Area -->
                 <div>
                     <h3 class="text-sm font-bold text-gray-400 mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-export"></i> à¸£à¸²à¸¢à¸Šà¸·à¹ˆà¸­à¹€à¸”à¹‡à¸„à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ (TCGPlayer Format)
+                        <i class="fa-solid fa-file-export"></i> Deck List Text (TCGPlayer Format)
                     </h3>
-                    <textarea id="export-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-red-500" rows="5" readonly placeholder="à¸£à¸²à¸¢à¸Šà¸·à¹ˆà¸­à¹€à¸”à¹‡à¸„à¸ˆà¸°à¸‚à¸¶à¹‰à¸™à¸•à¸£à¸‡à¸™à¸µà¹‰à¸­à¸±à¸•à¸´à¹‚à¸™à¸¡à¸±à¸•à¸´à¹€à¸¡à¸·à¹ˆà¸­à¹€à¸žà¸´à¹ˆà¸¡à¸à¸²à¸£à¹Œà¸”"></textarea>
+                    <textarea id="export-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-red-500" rows="5" readonly placeholder="Your deck list will appear here automatically as you add cards"></textarea>
                 </div>
             </div>
 
             <!-- Cost Curve Analytics -->
             <div id="chart-panel" class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md hidden">
                 <h3 class="text-sm font-bold text-gray-400 mb-3 flex items-center gap-1.5">
-                    <i class="fa-solid fa-chart-simple"></i> à¸ªà¸–à¸´à¸•à¸´à¸„à¹ˆà¸²à¸£à¹ˆà¸²à¸¢à¸à¸²à¸£à¹Œà¸”à¹ƒà¸™à¹€à¸”à¹‡à¸„ (Cost Curve)
+                    <i class="fa-solid fa-chart-simple"></i> Deck Cost Curve
                 </h3>
                 <div id="cost-bars-container" class="flex items-end justify-between h-32 pt-4 px-2 border-b border-gray-800">
                     <!-- Dynamic Bars -->
@@ -117,26 +117,26 @@
             <!-- Filters -->
             <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-                    <i class="fa-solid fa-filter text-red-500"></i> à¸„à¹‰à¸™à¸«à¸²à¹à¸¥à¸°à¸„à¸±à¸”à¸à¸£à¸­à¸‡à¹à¸šà¸šà¸¥à¸°à¹€à¸­à¸µà¸¢à¸”
+                    <i class="fa-solid fa-filter text-red-500"></i> Search & Filter
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="md:col-span-2">
-                        <label class="text-xs text-gray-400 block mb-1">à¸„à¹‰à¸™à¸«à¸²à¸”à¹ˆà¸§à¸™ (à¸Šà¸·à¹ˆà¸­ / à¹€à¸¥à¸‚à¸à¸²à¸£à¹Œà¸” / à¹€à¸­à¸Ÿà¹€à¸Ÿà¸à¸•à¹Œ):</label>
+                        <label class="text-xs text-gray-400 block mb-1">Quick search (name / card number / effect):</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </span>
-                            <input id="search-input" type="text" placeholder="à¹€à¸Šà¹ˆà¸™ Zoro, Monkey D. Luffy, OP16..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                            <input id="search-input" type="text" placeholder="e.g. Zoro, Monkey D. Luffy, OP16..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-red-500">
                         </div>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">à¸›à¸£à¸°à¹€à¸ à¸—à¸à¸²à¸£à¹Œà¸”:</label>
+                        <label class="text-xs text-gray-400 block mb-1">Card type:</label>
                         <select id="category-filter" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
-                            <option value="ALL">à¸—à¸¸à¸à¸›à¸£à¸°à¹€à¸ à¸—</option>
-                            <option value="Leader">Leader (à¸«à¸±à¸§à¸«à¸™à¹‰à¸²)</option>
-                            <option value="Character">Character (à¸•à¸±à¸§à¸¥à¸°à¸„à¸£)</option>
-                            <option value="Event">Event (à¹€à¸§à¸—à¸¡à¸™à¸•à¸£à¹Œ)</option>
-                            <option value="Stage">Stage (à¸ªà¸–à¸²à¸™à¸—à¸µà¹ˆ)</option>
+                            <option value="ALL">All types</option>
+                            <option value="Leader">Leader</option>
+                            <option value="Character">Character</option>
+                            <option value="Event">Event</option>
+                            <option value="Stage">Stage</option>
                         </select>
                     </div>
                 </div>
@@ -145,16 +145,16 @@
             <!-- Loader Spinner -->
             <div id="loading-spinner" class="hidden flex-col items-center justify-center py-20">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mb-4"></div>
-                <p class="text-sm text-gray-400">à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”à¸ˆà¸²à¸à¹€à¸‹à¸´à¸£à¹Œà¸Ÿà¹€à¸§à¸­à¸£à¹Œà¸„à¸¥à¸²à¸§à¸”à¹Œ...</p>
+                <p class="text-sm text-gray-400">Loading card set from the cloud server...</p>
             </div>
 
             <!-- Card Grid -->
             <div class="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-md">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-id-card text-red-500"></i> à¸£à¸²à¸¢à¸à¸²à¸£à¸à¸²à¸£à¹Œà¸”à¹ƒà¸™à¸Šà¸¸à¸”
+                        <i class="fa-solid fa-id-card text-red-500"></i> Cards in Set
                     </h2>
-                    <span id="card-count" class="text-xs text-gray-300 bg-[#2d2d2d] px-3 py-1 rounded-full font-semibold">à¸à¸³à¸¥à¸±à¸‡à¹€à¸Šà¸·à¹ˆà¸­à¸¡à¸•à¹ˆà¸­à¸à¸²à¸™à¸‚à¹‰à¸­à¸¡à¸¹à¸¥...</span>
+                    <span id="card-count" class="text-xs text-gray-300 bg-[#2d2d2d] px-3 py-1 rounded-full font-semibold">Connecting to database...</span>
                 </div>
                 
                 <div id="card-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -166,37 +166,60 @@
 
     <!-- JavaScript logic -->
     <script>
-        const PACKS_URL = "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/packs.json";
+        // Primary + fallback sources (jsDelivr sometimes rate-limits or is blocked by
+        // certain networks/ad-blockers, so we fall back to raw.githubusercontent.com)
+        const PACKS_URLS = [
+            "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/packs.json",
+            "https://raw.githubusercontent.com/michalkiral/optcg-data/main/data/packs.json"
+        ];
+        const cardsUrlsFor = (setCode) => [
+            `https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/cards/${setCode}.json`,
+            `https://raw.githubusercontent.com/michalkiral/optcg-data/main/data/cards/${setCode}.json`
+        ];
+
+        // Try a list of URLs in order, return the first one that succeeds
+        async function fetchFirstOk(urls) {
+            let lastError = null;
+            for (const url of urls) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status} at ${url}`);
+                    return await res.json();
+                } catch (err) {
+                    console.warn(`Fetch failed for ${url}:`, err);
+                    lastError = err;
+                }
+            }
+            throw lastError || new Error("All sources failed");
+        }
         
         let allCards = [];
         let deck = {}; // {card_id: count}
         let leader = null;
 
-        // à¹‚à¸«à¸¥à¸”à¸£à¸²à¸¢à¸Šà¸·à¹ˆà¸­à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”à¹€à¸žà¸·à¹ˆà¸­à¹€à¸•à¸´à¸¡à¸¥à¸‡à¹ƒà¸™ Dropdown
+        // Load the full list of card sets to populate the dropdown
         async function fetchPacks() {
             try {
-                const res = await fetch(PACKS_URL);
-                if (!res.ok) throw new Error("Packs load error");
-                const packs = await res.json();
+                const packs = await fetchFirstOk(PACKS_URLS);
                 
                 const selector = document.getElementById("set-selector");
                 selector.innerHTML = "";
                 
-                // à¸„à¸±à¸”à¹à¸¢à¸à¸Šà¸¸à¸”à¸«à¸¥à¸±à¸à¹† à¸‚à¸¶à¹‰à¸™à¸¡à¸²à¸”à¹‰à¸²à¸™à¸šà¸™ à¹à¸¥à¸°à¹ƒà¸ªà¹ˆà¸Šà¸¸à¸”à¸—à¸µà¹ˆà¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¸•à¹‰à¸­à¸‡à¸à¸²à¸£
-                const priorityPacks = ["OP-17", "OP-16", "EB-04", "OP-01"];
+                // Pull out the sets the user is likely to want first, and show them at the top
+                const priorityPacks = ["OP-16", "OP14-EB04", "OP15-EB04", "OP-01"];
                 
-                // à¹à¸ªà¸”à¸‡à¸Šà¸¸à¸” Priority à¸”à¹‰à¸²à¸™à¸šà¸™à¸ªà¸¸à¸”
+                // Show priority sets at the very top
                 priorityPacks.forEach(code => {
                     const p = packs.find(item => item.code === code);
                     if (p) {
                         const opt = document.createElement("option");
                         opt.value = p.code;
-                        opt.innerText = `ðŸ”¥ ${p.code} - ${p.name}`;
+                        opt.innerText = `🔥 ${p.code} - ${p.name}`;
                         selector.appendChild(opt);
                     }
                 });
 
-                // à¹à¸ªà¸”à¸‡à¸Šà¸¸à¸”à¸­à¸·à¹ˆà¸™à¹† à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”à¹ƒà¸™à¸£à¸°à¸šà¸šà¸•à¹ˆà¸­à¸ˆà¸²à¸à¸™à¸±à¹‰à¸™
+                // Then show every other set in the system
                 packs.forEach(p => {
                     if (!priorityPacks.includes(p.code)) {
                         const opt = document.createElement("option");
@@ -206,16 +229,24 @@
                     }
                 });
 
-                // à¹€à¸£à¸´à¹ˆà¸¡à¹‚à¸«à¸¥à¸”à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”à¹à¸£à¸à¸—à¸µà¹ˆà¹€à¸¥à¸·à¸­à¸à¸—à¸±à¸™à¸—à¸µ
+                // Immediately load cards for the first selected set
                 loadSetCards();
 
             } catch (err) {
                 console.error(err);
-                document.getElementById("set-selector").innerHTML = `<option value="err">à¹‚à¸«à¸¥à¸”à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”à¸œà¸´à¸”à¸žà¸¥à¸²à¸”</option>`;
+                document.getElementById("set-selector").innerHTML = `<option value="err">Error loading set list</option>`;
+                document.getElementById("card-grid").innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-400 bg-red-950/20 rounded-xl border border-red-900/50 p-6">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+                        <p class="text-sm font-bold">Could not load the set list</p>
+                        <p class="text-xs text-gray-500 mt-2 font-mono break-all">${err && err.message ? err.message : err}</p>
+                        <p class="text-xs text-gray-500 mt-2">This usually means your network/browser is blocking requests to cdn.jsdelivr.net and raw.githubusercontent.com (corporate firewall, ad-blocker, or a sandboxed preview). Try opening this file directly in a normal browser tab, or check the browser console (F12) for the full error.</p>
+                    </div>
+                `;
             }
         }
 
-        // à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹Œà¸”à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”à¹à¸šà¸šà¹„à¸”à¸™à¸²à¸¡à¸´à¸à¹€à¸‰à¸žà¸²à¸°à¹€à¸‹à¹‡à¸•à¸—à¸µà¹ˆà¹€à¸¥à¸·à¸­à¸
+        // Dynamically load all card data for the currently selected set only
         async function loadSetCards() {
             const setCode = document.getElementById("set-selector").value;
             if (!setCode || setCode === "loading" || setCode === "err") return;
@@ -226,14 +257,10 @@
 
             grid.innerHTML = "";
             spinner.classList.remove("hidden");
-            countLabel.innerText = "à¸à¸³à¸¥à¸±à¸‡à¸”à¸²à¸§à¸™à¹Œà¹‚à¸«à¸¥à¸”...";
+            countLabel.innerText = "Downloading...";
 
             try {
-                // à¸”à¸¶à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸£à¸‡à¸ˆà¸²à¸ CDN à¸„à¸¸à¸“à¸ à¸²à¸žà¸ªà¸¹à¸‡à¹€à¸ªà¸–à¸µà¸¢à¸£ 100%
-                const res = await fetch(`https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/cards/${setCode}.json`);
-                if (!res.ok) throw new Error("Set cards fetch error");
-                
-                allCards = await res.json();
+                allCards = await fetchFirstOk(cardsUrlsFor(setCode));
                 spinner.classList.add("hidden");
                 filterAndRender();
 
@@ -243,11 +270,12 @@
                 grid.innerHTML = `
                     <div class="col-span-full text-center py-12 text-red-400 bg-red-950/20 rounded-xl border border-red-900/50 p-6">
                         <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
-                        <p class="text-sm font-bold">à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¸”à¸¶à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸” ${setCode} à¹„à¸”à¹‰à¸Šà¸±à¹ˆà¸§à¸„à¸£à¸²à¸§</p>
-                        <p class="text-xs text-gray-500 mt-1">à¸à¸£à¸¸à¸“à¸²à¸—à¸”à¸¥à¸­à¸‡à¹€à¸¥à¸·à¸­à¸à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”à¸Šà¸¸à¸”à¸­à¸·à¹ˆà¸™à¸«à¸£à¸·à¸­à¹€à¸›à¸´à¸”à¸«à¸™à¹‰à¸²à¹€à¸§à¹‡à¸šà¹ƒà¸«à¸¡à¹ˆà¸­à¸µà¸à¸„à¸£à¸±à¹‰à¸‡</p>
+                        <p class="text-sm font-bold">Could not fetch data for set ${setCode} right now</p>
+                        <p class="text-xs text-gray-500 mt-2 font-mono break-all">${err && err.message ? err.message : err}</p>
+                        <p class="text-xs text-gray-500 mt-1">Please try another set, reload the page, or check the browser console (F12) for details</p>
                     </div>
                 `;
-                countLabel.innerText = "à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸¥à¹‰à¸¡à¹€à¸«à¸¥à¸§";
+                countLabel.innerText = "Failed to load";
             }
         }
 
@@ -256,10 +284,10 @@
             const catVal = document.getElementById("category-filter").value;
 
             const filtered = allCards.filter(card => {
-                // à¸„à¸±à¸”à¸à¸£à¸­à¸‡à¸›à¸£à¸°à¹€à¸ à¸—
+                // Filter by category
                 if (catVal !== "ALL" && card.category !== catVal) return false;
 
-                // à¸„à¹‰à¸™à¸«à¸²à¸•à¸²à¸¡à¸•à¸±à¸§à¸­à¸±à¸à¸©à¸£
+                // Search by text
                 if (searchVal !== "") {
                     const name = card.name ? card.name.toLowerCase() : "";
                     const cid = card.id ? card.id.toLowerCase() : "";
@@ -271,7 +299,7 @@
                 return true;
             });
 
-            document.getElementById("card-count").innerText = `à¹à¸ªà¸”à¸‡à¸œà¸¥ ${filtered.length} à¹ƒà¸š`;
+            document.getElementById("card-count").innerText = `Showing ${filtered.length} cards`;
             renderGrid(filtered);
         }
 
@@ -280,7 +308,7 @@
             grid.innerHTML = "";
 
             if (cardsList.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500 italic text-sm">à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹Œà¸”à¸—à¸µà¹ˆà¸•à¸£à¸‡à¸à¸±à¸šà¸•à¸±à¸§à¸à¸£à¸­à¸‡</div>`;
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500 italic text-sm">No cards match this filter</div>`;
                 return;
             }
 
@@ -288,10 +316,10 @@
                 const isLeader = card.category === "Leader";
                 const currentCount = deck[card.id] || 0;
                 
-                // à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸—à¸µà¹ˆà¸­à¸¢à¸¹à¹ˆà¸ à¸²à¸žà¹à¸¥à¸°à¹à¸›à¸¥à¸‡à¹ƒà¸«à¹‰à¹€à¸£à¸µà¸¢à¸à¸£à¸¹à¸›à¸ à¸²à¸žà¸ˆà¸²à¸ Bandai à¸à¸¥à¸²à¸‡à¹€à¸ªà¸–à¸µà¸¢à¸£à¸—à¸µà¹ˆà¸ªà¸¸à¸” 
+                // Resolve the image URL, falling back to the official Bandai card list
                 let imgUrl = card.image ? card.image : `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id}.png`;
                 
-                // à¹€à¸žà¸·à¹ˆà¸­à¸«à¸¥à¸µà¸à¹€à¸¥à¸µà¹ˆà¸¢à¸‡à¸£à¸°à¸šà¸šà¸šà¸¥à¹‡à¸­à¸à¸ à¸²à¸žà¸‚à¸­à¸‡ Bandai à¹ƒà¸™à¸—à¸¸à¸à¸ªà¸–à¸²à¸™à¸à¸²à¸£à¸“à¹Œ
+                // Avoid Bandai's image blocking in every scenario
                 imgUrl = imgUrl.replace("asia-en.onepiece-cardgame.com", "en.onepiece-cardgame.com");
 
                 const cardDiv = document.createElement("div");
@@ -311,10 +339,10 @@
                     <div class="mt-3">
                         ${isLeader ? 
                             `<button onclick="setLeader('${card.id}')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2 px-2.5 rounded-lg transition shadow-md flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-crown"></i> à¹€à¸¥à¸·à¸­à¸à¹€à¸›à¹‡à¸™ Leader
+                                <i class="fa-solid fa-crown"></i> Set as Leader
                              </button>` :
                             `<button onclick="addToDeck('${card.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 px-2.5 rounded-lg transition flex justify-between items-center shadow-md">
-                                <span class="flex items-center gap-1"><i class="fa-solid fa-plus"></i> à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸‚à¹‰à¸²à¹€à¸”à¹‡à¸„</span>
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-plus"></i> Add to Deck</span>
                                 <span class="bg-red-950/70 border border-red-800 text-white px-2 py-0.5 rounded-full text-[10px] min-w-[20px] text-center">${currentCount}</span>
                             </button>`
                         }
@@ -325,7 +353,7 @@
         }
 
         window.setLeader = function(cardId) {
-            // à¸„à¹‰à¸™à¸«à¸²à¸à¸²à¸£à¹Œà¸”à¸«à¸±à¸§à¸«à¸™à¹‰à¸²à¸ˆà¸²à¸à¸¥à¸´à¸ªà¸•à¹Œà¹ƒà¸™à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™
+            // Find the leader card in the current list
             const card = allCards.find(c => c.id === cardId);
             if (!card) return;
             leader = card;
@@ -335,14 +363,14 @@
             
             const slot = document.getElementById("leader-slot");
             slot.innerHTML = `
-                <p class="text-xs text-amber-500 font-bold mb-2">ðŸ‘‘ ACTIVE LEADER</p>
+                <p class="text-xs text-amber-500 font-bold mb-2">👑 ACTIVE LEADER</p>
                 <div class="w-28 overflow-hidden rounded-lg shadow-lg mb-2 border border-amber-500 bg-[#111] aspect-[3/4]">
                     <img src="${imgUrl}" referrerpolicy="no-referrer" class="w-full h-full object-contain" onerror="this.src='https://en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
                 </div>
                 <div class="text-sm font-bold text-amber-400">${card.name}</div>
                 <div class="text-[10px] text-gray-400 font-mono mt-0.5">${card.id} [${card.colors.join('/')}]</div>
                 <button onclick="removeLeader()" class="mt-3 text-[10px] bg-red-950/80 text-red-400 hover:bg-red-900 hover:text-white border border-red-800 rounded px-3 py-1 transition font-bold">
-                    <i class="fa-solid fa-xmark mr-1"></i> à¸›à¸¥à¸”à¸à¸²à¸£à¹ƒà¸Šà¹‰à¸‡à¸²à¸™
+                    <i class="fa-solid fa-xmark mr-1"></i> Remove Leader
                 </button>
             `;
             
@@ -353,8 +381,8 @@
             leader = null;
             const slot = document.getElementById("leader-slot");
             slot.innerHTML = `
-                <p class="text-xs text-gray-400 mb-2">ðŸ‘‘ LEADER à¸à¸²à¸£à¹Œà¸”à¸«à¸±à¸§à¸«à¸™à¹‰à¸²</p>
-                <div id="leader-info" class="text-sm text-gray-500 italic">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¹€à¸¥à¸·à¸­à¸à¸¥à¸µà¸”à¹€à¸”à¸­à¸£à¹Œ (à¸à¸”à¸›à¸¸à¹ˆà¸¡à¹€à¸¥à¸·à¸­à¸à¹ƒà¸•à¹‰à¸à¸²à¸£à¹Œà¸”à¸«à¸±à¸§à¸«à¸™à¹‰à¸²à¸à¸±à¹ˆà¸‡à¸‚à¸§à¸²)</div>
+                <p class="text-xs text-gray-400 mb-2">👑 LEADER Card</p>
+                <div id="leader-info" class="text-sm text-gray-500 italic">No leader selected yet (click "Set as Leader" under a Leader card on the right)</div>
             `;
             updateDeckUI();
         }
@@ -364,11 +392,11 @@
             const totalCards = Object.values(deck).reduce((a, b) => a + b, 0);
 
             if (totalCards >= 50) {
-                alert("à¹€à¸”à¹‡à¸„à¸«à¸¥à¸±à¸à¹ƒà¸ªà¹ˆà¸à¸²à¸£à¹Œà¸”à¹€à¸•à¹‡à¸¡à¸ˆà¸³à¸™à¸§à¸™ 50 à¹ƒà¸šà¸ªà¸¡à¸šà¸¹à¸£à¸“à¹Œà¹à¸¥à¹‰à¸§à¸„à¸£à¸±à¸š!");
+                alert("Your main deck is already full at 50 cards!");
                 return;
             }
             if (currentCount >= 4) {
-                alert("à¸à¸•à¸´à¸à¸²à¸—à¸²à¸‡à¸à¸²à¸£: à¹ƒà¸ªà¹ˆà¸à¸²à¸£à¹Œà¸”à¸—à¸µà¹ˆà¸¡à¸µà¸«à¸¡à¸²à¸¢à¹€à¸¥à¸‚à¸£à¸«à¸±à¸ªà¸•à¸£à¸‡à¸à¸±à¸™à¹„à¸”à¹‰à¸ªà¸¹à¸‡à¸ªà¸¸à¸”à¹„à¸¡à¹ˆà¹€à¸à¸´à¸™ 4 à¹ƒà¸šà¹ƒà¸™à¹€à¸”à¹‡à¸„!");
+                alert("Official rule: you can only include up to 4 copies of a card with the same number in your deck!");
                 return;
             }
 
@@ -397,18 +425,18 @@
             document.getElementById("deck-progress").style.width = `${(total / 50) * 100}%`;
 
             if (Object.keys(deck).length === 0) {
-                listContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-8">à¹€à¸”à¹‡à¸„à¸‚à¸­à¸‡à¸„à¸¸à¸“à¸§à¹ˆà¸²à¸‡à¹€à¸›à¸¥à¹ˆà¸²à¹ƒà¸™à¸•à¸­à¸™à¸™à¸µà¹‰</p>`;
+                listContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-8">Your deck is empty right now</p>`;
             } else {
                 Object.entries(deck).forEach(([cardId, count]) => {
                     const card = allCards.find(c => c.id === cardId);
                     const name = card ? card.name : cardId;
                     
-                    // à¸£à¸°à¸šà¸šà¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸„à¸§à¸²à¸¡à¸ªà¸­à¸”à¸„à¸¥à¹‰à¸­à¸‡à¸‚à¸­à¸‡à¸ªà¸µà¹€à¸”à¹‡à¸„à¸à¸²à¸£à¹Œà¸”à¸à¸±à¸šà¸à¸²à¸£à¹Œà¸”à¸«à¸±à¸§à¸«à¸™à¹‰à¸² Leader
+                    // Check whether this card's color matches the Leader's color
                     let colorError = "";
                     if (leader && card) {
                         const hasMatchingColor = card.colors.some(c => leader.colors.includes(c));
                         if (!hasMatchingColor) {
-                            colorError = `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[9px] bg-red-950 text-red-400 font-bold border border-red-800">à¸ªà¸µà¹„à¸¡à¹ˆà¸•à¸£à¸‡Leader âš ï¸</span>`;
+                            colorError = `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[9px] bg-red-950 text-red-400 font-bold border border-red-800">Color mismatch ⚠️</span>`;
                         }
                     }
 
@@ -420,16 +448,16 @@
                             <div class="text-[10px] text-gray-400 font-mono">${cardId} ${colorError}</div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="subFromDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">âž–</button>
+                            <button onclick="subFromDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">➖</button>
                             <span class="text-xs font-bold text-red-400 font-mono w-4 text-center">${count}</span>
-                            <button onclick="addToDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">âž•</button>
+                            <button onclick="addToDeck('${cardId}')" class="bg-gray-800 hover:bg-gray-700 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-bold transition">➕</button>
                         </div>
                     `;
                     listContainer.appendChild(row);
                 });
             }
 
-            // à¹à¸ªà¸”à¸‡à¸«à¸™à¹‰à¸²à¸•à¹ˆà¸²à¸‡à¸à¸£à¸²à¸Ÿ Cost Curve à¹€à¸¡à¸·à¹ˆà¸­à¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹Œà¸”à¹ƒà¸™à¹€à¸”à¹‡à¸„
+            // Show the Cost Curve panel once there's data in the deck
             const chartPanel = document.getElementById("chart-panel");
             if (total > 0) {
                 chartPanel.classList.remove("hidden");
@@ -438,23 +466,23 @@
                 chartPanel.classList.add("hidden");
             }
 
-            // à¸£à¸°à¸šà¸šà¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸à¸•à¸´à¸à¸²à¸„à¸§à¸²à¸¡à¸–à¸¹à¸à¸•à¹‰à¸­à¸‡à¹à¸¥à¸°à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¸‡à¸²à¸™
+            // Validate the deck and notify the user
             const validationBox = document.getElementById("validation-msg");
             if (total < 50) {
                 validationBox.innerHTML = `
                     <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                    <span>à¸¢à¸±à¸‡à¸‚à¸²à¸”à¸à¸²à¸£à¹Œà¸”à¸­à¸µà¸ <strong>${50 - total} à¹ƒà¸š</strong> à¹€à¸žà¸·à¹ˆà¸­à¹ƒà¸«à¹‰à¹„à¸”à¹‰à¸ˆà¸³à¸™à¸§à¸™à¸„à¸£à¸š 50 à¹ƒà¸šà¸žà¸­à¸”à¸µà¸•à¸²à¸¡à¸à¸•à¸´à¸à¸²</span>
+                    <span>You still need <strong>${50 - total} more card(s)</strong> to reach the required 50-card deck</span>
                 `;
                 validationBox.className = "text-xs text-yellow-400 bg-yellow-950/40 p-2.5 rounded-lg border border-yellow-900/50 flex items-start gap-2";
             } else if (total === 50) {
                 validationBox.innerHTML = `
                     <i class="fa-solid fa-circle-check mt-0.5"></i>
-                    <span>à¹€à¸”à¹‡à¸„à¸™à¸µà¹‰à¸ªà¸¡à¸šà¸¹à¸£à¸“à¹Œà¹à¸¥à¹‰à¸§! à¸›à¸£à¸°à¸à¸­à¸šà¹„à¸›à¸”à¹‰à¸§à¸¢à¸à¸²à¸£à¹Œà¸”à¸„à¸£à¸šà¸–à¹‰à¸§à¸™ 50 à¹ƒà¸šà¸žà¸£à¹‰à¸­à¸¡à¸™à¸³à¹„à¸›à¹ƒà¸Šà¹‰à¸¥à¸‡à¸ªà¸™à¸²à¸¡à¹à¸‚à¹ˆà¸‡à¸—à¸²à¸‡à¸à¸²à¸£</span>
+                    <span>This deck is complete! All 50 cards are in — ready for official play</span>
                 `;
                 validationBox.className = "text-xs text-green-400 bg-green-950/40 p-2.5 rounded-lg border border-green-900/50 flex items-start gap-2";
             }
 
-            // à¸ªà¸£à¹‰à¸²à¸‡à¹€à¸”à¹‡à¸„à¸¥à¸´à¸ªà¸•à¹Œà¹€à¸žà¸·à¹ˆà¸­à¸ªà¹ˆà¸‡à¸­à¸­à¸à¹€à¸›à¹‡à¸™ TCGPlayer format
+            // Build the deck list for export in TCGPlayer format
             const textLines = [];
             if (leader) {
                 textLines.push(`1x ${leader.id}`);
@@ -465,7 +493,7 @@
             document.getElementById("export-textarea").value = textLines.join("\n");
         }
 
-        // à¸£à¸°à¸šà¸šà¸§à¸²à¸”à¸à¸£à¸²à¸Ÿ Cost Curve à¹à¸šà¸š HTML CSS à¸”à¸´à¸šà¹€à¸ªà¸–à¸µà¸¢à¸£à¸—à¸µà¹ˆà¸ªà¸¸à¸”
+        // Render the Cost Curve as a plain, reliable HTML/CSS bar chart
         function renderCostCurve() {
             const container = document.getElementById("cost-bars-container");
             container.innerHTML = "";
@@ -495,19 +523,19 @@
             });
         }
 
-        // à¸¥à¹‰à¸²à¸‡à¸„à¹ˆà¸²à¹à¸¥à¸°à¸ªÐ±Ñ€Ð¾à¸ªà¹€à¸”à¹‡à¸„à¸ˆà¸±à¸”à¹€à¸£à¸´à¹ˆà¸¡à¹ƒà¸«à¸¡à¹ˆ
+        // Clear everything and reset the deck
         document.getElementById("clear-deck-btn").addEventListener("click", () => {
             deck = {};
             removeLeader();
             filterAndRender();
         });
 
-        // à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸ˆà¸±à¸šà¸•à¸²à¸„à¸§à¸²à¸¡à¹€à¸„à¸¥à¸·à¹ˆà¸­à¸™à¹„à¸«à¸§à¸­à¸µà¹€à¸§à¸™à¸•à¹Œà¸„à¸§à¸šà¸„à¸¸à¸¡
+        // Wire up control events
         document.getElementById("set-selector").addEventListener("change", loadSetCards);
         document.getElementById("search-input").addEventListener("input", filterAndRender);
         document.getElementById("category-filter").addEventListener("change", filterAndRender);
 
-        // à¸£à¸±à¸™à¸‚à¸±à¹‰à¸™à¸•à¸­à¸™à¸£à¸°à¸šà¸šà¸”à¸¶à¸‡à¸£à¸²à¸¢à¸Šà¸·à¹ˆà¸­à¸Šà¸¸à¸”à¸à¸²à¸£à¹Œà¸”à¸¡à¸²à¸—à¸³à¸‡à¸²à¸™à¸•à¸­à¸™à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™
+        // Kick off loading the set list on startup
         fetchPacks();
     </script>
 </body>
