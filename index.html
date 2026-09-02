@@ -251,7 +251,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">🔍 ค้นหาละเอียด</label>
                         <div class="relative">
-                            <input type="text" id="search-input" oninput="filterCards()" placeholder="ค้นหารหัสการ์ด, ชื่อ หรือข้อความเอฟเฟกต์..." class="w-full bg-zinc-950 border border-pirate-border rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-pirate-red">
+                            <input type="text" id="search-input" oninput="debounceSearch()" placeholder="ค้นหารหัสการ์ด, ชื่อ หรือข้อความเอฟเฟกต์..." class="w-full bg-zinc-950 border border-pirate-border rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-pirate-red">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-500">
                                 <i class="fa-solid fa-search text-sm"></i>
                             </div>
@@ -548,6 +548,7 @@
             document.body.style.overflow = ''; // restore scroll
         }
 
+
         // --- System Data States ---
         let packsList = [];
         let cardDatabase = [];
@@ -559,6 +560,69 @@
         
         let activeColorsFilter = [];
         let activeCategoriesFilter = [];
+
+        // --- iPad Stability & Dynamic Card Enrichment Logic ---
+        let searchTimeout = null;
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterCards();
+            }, 300);
+        }
+
+        async function enrichCardDetails(cards) {
+            const select = document.getElementById('set-select');
+            const packId = select.value;
+            
+            // Gather unique card list needing enrichment
+            const toFetch = cards.filter(card => {
+                const cardId = card.id || card.card_id;
+                return card.pack_id && cardId && (!masterCardDatabase[cardId].effect || masterCardDatabase[cardId].effect === "-");
+            });
+            
+            if (toFetch.length === 0) return;
+            
+            // Show background enrichment spinner
+            const resultsCounter = document.getElementById('card-results-counter');
+            const originalText = resultsCounter.innerHTML;
+            if (!originalText.includes("กำลังโหลดข้อมูล")) {
+                resultsCounter.innerHTML = `${originalText} <span class="text-[10px] text-pirate-accent ml-2 animate-pulse"><i class="fa-solid fa-cloud-arrow-down"></i> กำลังโหลดข้อมูลเอฟเฟกต์การ์ดเพิ่มเติม...</span>`;
+            }
+            
+            const batchSize = 10; // Light batch size for iPad Safari stability
+            for (let i = 0; i < toFetch.length; i += batchSize) {
+                // Stop loading if the user has navigated away or typed another filter
+                if (select.value !== packId) break;
+                
+                const batch = toFetch.slice(i, i + batchSize);
+                await Promise.all(batch.map(async (card) => {
+                    const cardId = card.id || card.card_id;
+                    try {
+                        const url = `https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${card.pack_id}/${cardId}.json`;
+                        const res = await fetch(url);
+                        if (res.ok) {
+                            const details = await res.json();
+                            if (details && details.effect) {
+                                masterCardDatabase[cardId].effect = details.effect;
+                                masterCardDatabase[cardId].trigger = details.trigger || details.trigger_text || null;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to enrich card ${cardId}`, e);
+                    }
+                }));
+                
+                // Real-time update the current search grid with newly fetched details
+                const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+                if (searchQuery.includes("add") || searchQuery.includes("up") || searchQuery.includes("to") || searchQuery.includes(" ") || searchQuery.length > 3) {
+                    filterCards(true); // silent filter
+                }
+            }
+            
+            // Final silent filter to clean UI
+            filterCards(true);
+        }
+
 
         // CDN Sources
         const PACKS_API = "https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/packs.json";
@@ -695,6 +759,9 @@
                 });
                 
                 filterCards();
+                if (packId !== "ALL") {
+                    enrichCardDetails(cardDatabase);
+                }
             } catch (e) {
                 console.error(e);
                 grid.innerHTML = `
