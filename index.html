@@ -480,6 +480,7 @@
             const card = masterCardDatabase[cardId];
             if (!card) return;
             
+            // ตั้งค่าข้อมูลพื้นฐานทันทีเพื่อให้ป๊อปอัปแสดงผลทันใจ
             document.getElementById('modal-card-name').textContent = card.name || cardId;
             document.getElementById('modal-card-id-category').textContent = `${cardId} | ${card.category} | ${card.rarity || 'Common'}`;
             
@@ -493,12 +494,59 @@
             document.getElementById('modal-card-types').textContent = card.types ? card.types.join(', ') : '-';
             
             const effectDiv = document.getElementById('modal-card-effect');
-            if (card.effect && card.effect.trim() !== "-") {
-                effectDiv.textContent = card.effect;
-            } else {
-                effectDiv.innerHTML = '<span class="text-zinc-500 italic">ไม่มีความสามารถพิเศษ (Vanilla Character / Stage)</span>';
-            }
             
+            // แสดงสถานะกำลังดาวน์โหลดคำแปลภาษาอังกฤษอย่างเป็นทางการ
+            effectDiv.innerHTML = `
+                <div class="py-4 text-center text-zinc-500">
+                    <i class="fa-solid fa-spinner fa-spin text-xl text-pirate-red mb-2 block"></i>
+                    <p class="text-xs">กำลังสืบค้นคำแปลภาษาอังกฤษดั้งเดิม...</p>
+                </div>`;
+            
+            // สร้างปุ่มจัดการการ์ด
+            updateModalActions(card, cardId);
+            
+            document.getElementById('card-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // lock scroll
+            
+            // ดึงข้อมูลคำแปลแบบไดนามิกจากเซิร์ฟเวอร์หลัก
+            if (card.effect !== undefined) {
+                displayCardEffect(card);
+            } else {
+                const packId = card.pack_id;
+                fetch(`https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${packId}/${cardId}.json`)
+                    .then(res => {
+                        if (!res.ok) throw new Error("Card detailed fetch failed");
+                        return res.json();
+                    })
+                    .then(fullData => {
+                        // เก็บแคชข้อมูลไว้
+                        card.effect = fullData.effect || "-";
+                        card.trigger = fullData.trigger || null;
+                        displayCardEffect(card);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        effectDiv.innerHTML = '<span class="text-zinc-500 italic">ไม่มีความสามารถพิเศษ (Vanilla Character / Stage)</span>';
+                    });
+            }
+        }
+
+        function displayCardEffect(card) {
+            const effectDiv = document.getElementById('modal-card-effect');
+            let html = "";
+            if (card.effect && card.effect.trim() !== "-") {
+                html += `<div class="mb-2"><span class="text-pirate-accent font-bold block mb-1 uppercase text-[10px]">✨ [Card Effect]</span><p class="text-zinc-200 text-xs leading-relaxed">${card.effect}</p></div>`;
+            }
+            if (card.trigger && card.trigger.trim() !== "-") {
+                html += `<div class="mt-3"><span class="text-yellow-400 font-bold block mb-1 uppercase text-[10px]">⚡ [Trigger Effect]</span><p class="text-yellow-100 text-xs leading-relaxed">${card.trigger}</p></div>`;
+            }
+            if (!html) {
+                html = '<span class="text-zinc-500 italic text-xs">ไม่มีความสามารถพิเศษ (Vanilla Character / Stage)</span>';
+            }
+            effectDiv.innerHTML = html;
+        }
+
+        function updateModalActions(card, cardId) {
             const actionsContainer = document.getElementById('modal-actions');
             actionsContainer.innerHTML = '';
             
@@ -515,7 +563,7 @@
                 const count = deck[cardId] || 0;
                 
                 const addBtn = document.createElement('button');
-                addBtn.className = `flex-grow py-3 ${count >= 4 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-[#ff4b4b] hover:bg-[#e03e3e] text-white'} font-bold rounded-lg text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow`;
+                addBtn.className = `flex-grow py-3 ${count >= 4 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-pirate-red hover:bg-pirate-redHover text-white'} font-bold rounded-lg text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow`;
                 addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> เพิ่มลงเด็ค (${count} / 4)`;
                 addBtn.onclick = () => {
                     if (count >= 4) {
@@ -523,7 +571,7 @@
                         return;
                     }
                     addToDeck(card);
-                    openCardModal(cardId); // refresh count UI
+                    updateModalActions(card, cardId); // refresh count UI
                 };
                 actionsContainer.appendChild(addBtn);
                 
@@ -533,14 +581,11 @@
                     subBtn.innerHTML = '<i class="fa-solid fa-minus"></i>';
                     subBtn.onclick = () => {
                         decrementDeckCard(cardId);
-                        openCardModal(cardId); // refresh count UI
+                        updateModalActions(card, cardId); // refresh count UI
                     };
                     actionsContainer.appendChild(subBtn);
                 }
             }
-            
-            document.getElementById('card-modal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // lock scroll
         }
 
         function closeModal(event) {
@@ -859,6 +904,19 @@
             grid.innerHTML = '';
 
             cards.forEach(card => {
+                const cardId = card.id || card.card_id;
+                
+                // ตรวจสอบและดึงข้อมูลภาษาอังกฤษเพิ่มเติมในเบื้องหลังแบบเงียบๆ เพื่อความรวดเร็วและใช้ในการสืบค้นเอฟเฟกต์แบบละเอียด
+                if (card.effect === undefined) {
+                    const packId = card.pack_id;
+                    fetch(`https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${packId}/${cardId}.json`)
+                        .then(res => res.json())
+                        .then(fullData => {
+                            card.effect = fullData.effect || "-";
+                            card.trigger = fullData.trigger || null;
+                        })
+                        .catch(() => { card.effect = "-"; });
+                }
                 const cardId = card.id || card.card_id;
                 const countInDeck = deck[cardId] || 0;
                 
