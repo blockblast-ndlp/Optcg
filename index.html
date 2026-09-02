@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Card Kaizoku - One Piece TCG Deck Builder</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
+        .card-glow:hover {
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body class="bg-[#121212] text-gray-100 min-h-screen font-sans antialiased selection:bg-red-600 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="bg-[#1a1a1a] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl animate-bounce">ð´ââ ï¸</span>
+                <div>
+                    <h1 class="text-2xl font-black tracking-wider text-red-600 font-mono">CARD KAIZOKU</h1>
+                    <p class="text-xs text-gray-400">One Piece TCG Ultimate Deck Builder & Card Database</p>
+                </div>
+            </div>
+            
+            <!-- Quick Info/Status -->
+            <div class="flex items-center gap-4">
+                <span id="network-status" class="flex items-center gap-2 text-xs bg-green-950/80 text-green-400 border border-green-800 px-3 py-1.5 rounded-full font-mono">
+                    <span class="w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
+                    Live Data: Connected
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Side: Deck Editor (5 Cols) -->
+        <section class="lg:col-span-5 space-y-6">
+            <div class="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 sticky top-24 shadow-2xl space-y-6">
+                
+                <!-- Deck Header -->
+                <div class="flex justify-between items-center pb-4 border-b border-gray-800">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl text-red-500">ðï¸</span>
+                        <h2 class="text-lg font-bold text-gray-100">à¹à¸à¹à¸à¸à¸­à¸à¸à¸±à¸ (My Deck)</h2>
+                    </div>
+                    <button id="clear-deck-btn" class="text-xs bg-red-950 hover:bg-red-900 text-red-400 hover:text-red-200 border border-red-800 px-3 py-1.5 rounded-lg transition duration-200">
+                        à¸¥à¹à¸²à¸à¹à¸à¹à¸à¸à¸±à¹à¸à¸«à¸¡à¸ ð§¹
+                    </button>
+                </div>
+
+                <!-- Leader Container -->
+                <div class="bg-[#222] rounded-xl p-4 border border-gray-800 shadow-inner flex flex-col items-center min-h-[140px] justify-center transition duration-200">
+                    <p class="text-[10px] font-bold text-red-500 tracking-widest uppercase mb-3">ð ACTIVE LEADER</p>
+                    <div id="leader-display" class="w-full text-center flex flex-col items-center">
+                        <div class="text-sm text-gray-500 italic">à¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹</div>
+                        <p class="text-xs text-gray-600 mt-1">à¸à¸à¸à¸¸à¹à¸¡ "à¹à¸¥à¸·à¸­à¸à¹à¸à¹à¸ Leader" à¸à¸µà¹à¸à¸²à¸£à¹à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹à¸à¹à¸²à¸à¸à¸§à¸²</p>
+                    </div>
+                </div>
+
+                <!-- Deck Stats & Progress -->
+                <div class="bg-[#222] rounded-xl p-4 border border-gray-800 space-y-3">
+                    <div class="flex justify-between text-sm items-center">
+                        <span class="text-gray-400 font-medium">à¸à¸³à¸à¸§à¸à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸«à¸¥à¸±à¸:</span>
+                        <span class="text-base font-bold text-white"><span id="deck-qty" class="text-red-500 text-lg">0</span> / 50 à¹à¸</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                        <div id="deck-progress" class="bg-gradient-to-r from-red-600 to-red-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="validation-box" class="text-xs p-3 rounded-lg bg-yellow-950/30 border border-yellow-900/50 text-yellow-400 flex items-start gap-2">
+                        <span>â¹ï¸</span>
+                        <span>à¸à¸£à¸¸à¸à¸²à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹ à¹à¸à¸·à¹à¸­à¸à¸£à¸§à¸à¸ªà¸­à¸à¸à¸§à¸²à¸¡à¸ªà¸­à¸à¸à¸¥à¹à¸­à¸à¸à¸­à¸à¸ªà¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸</span>
+                    </div>
+                </div>
+
+                <!-- Cost Curve -->
+                <div id="cost-curve-section" class="space-y-2 hidden">
+                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">ð à¸ªà¸±à¸à¸ªà¹à¸§à¸à¸à¹à¸²à¸£à¹à¸²à¸¢ (Cost Curve)</h3>
+                    <div class="bg-[#222] rounded-xl p-4 border border-gray-800">
+                        <div id="curve-chart-container" class="flex items-end justify-between h-24 pt-2">
+                            <!-- Bars will render dynamically -->
+                        </div>
+                        <div class="flex justify-between text-[10px] text-gray-500 mt-1 border-t border-gray-800 pt-1">
+                            <span>Cost: 0</span>
+                            <span>1</span>
+                            <span>2</span>
+                            <span>3</span>
+                            <span>4</span>
+                            <span>5</span>
+                            <span>6</span>
+                            <span>7</span>
+                            <span>8</span>
+                            <span>9</span>
+                            <span>10+</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deck List Cards -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">ð´ à¸£à¸²à¸¢à¸à¸·à¹à¸­à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸</h3>
+                    <div id="deck-items-list" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                        <div class="text-center py-8 text-gray-500 italic text-sm">à¸¢à¸±à¸à¹à¸¡à¹à¸¡à¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸«à¸¥à¸±à¸</div>
+                    </div>
+                </div>
+
+                <!-- Export / Import Section -->
+                <div class="border-t border-gray-800 pt-4 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">ð¾ à¸à¸³à¹à¸à¹à¸² / à¸ªà¹à¸à¸­à¸­à¸à¹à¸à¹à¸</h3>
+                        <button id="import-toggle-btn" class="text-[10px] text-red-400 hover:underline">à¸à¸¥à¸´à¸à¹à¸à¸·à¹à¸­à¹à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² ð¥</button>
+                    </div>
+                    
+                    <!-- Import Input -->
+                    <div id="import-box" class="hidden space-y-2">
+                        <textarea id="import-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-2.5 text-xs font-mono focus:outline-none focus:border-red-500" rows="3" placeholder="à¸§à¸²à¸à¹à¸à¹à¸à¹à¸à¹à¸ TCGPlayer à¸à¸µà¹à¸à¸µà¹...&#10;à¹à¸à¹à¸: 4x OP01-025"></textarea>
+                        <button id="confirm-import-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-1.5 rounded text-xs transition duration-200">à¸à¸³à¹à¸à¹à¸²à¸à¸²à¸£à¹à¸à¹à¸à¹à¸²à¹à¸à¹à¸ ð</button>
+                    </div>
+
+                    <!-- Export Output -->
+                    <textarea id="export-textarea" class="w-full bg-[#111] text-gray-400 border border-gray-800 rounded-lg p-2.5 text-xs font-mono focus:outline-none" rows="3" readonly placeholder="à¸à¸±à¸à¹à¸à¹à¸à¹à¸ªà¸£à¹à¸à¹à¸¥à¹à¸§ à¸£à¸²à¸¢à¸à¸·à¹à¸­à¸à¸²à¸£à¹à¸à¸à¸°à¹à¸ªà¸à¸à¸à¸£à¸à¸à¸µà¹à¸ªà¸³à¸«à¸£à¸±à¸à¸à¸±à¸à¸¥à¸­à¸"></textarea>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Right Side: Card Finder (7 Cols) -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- Controls & Filters Panel -->
+            <div class="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-2xl space-y-4">
+                <h2 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                    <span class="text-red-500">ð</span> à¸à¹à¸à¸«à¸²à¹à¸¥à¸°à¸à¸£à¸­à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dropdown Select Set -->
+                    <div>
+                        <label for="pack-selector" class="text-xs font-semibold text-gray-400 block mb-1.5">à¸à¸¸à¸à¸à¸²à¸£à¹à¸ (Set):</label>
+                        <select id="pack-selector" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                            <option value="">-- à¸à¸³à¸¥à¸±à¸à¹à¸«à¸¥à¸à¸£à¸²à¸¢à¸à¸²à¸£à¸à¸¸à¸à¸à¸²à¸£à¹à¸ --</option>
+                        </select>
+                    </div>
+
+                    <!-- Fast Text Search -->
+                    <div>
+                        <label for="search-input" class="text-xs font-semibold text-gray-400 block mb-1.5">à¸à¹à¸à¸«à¸²à¸à¹à¸§à¸ (à¸à¸·à¹à¸­ / à¹à¸¥à¸à¸£à¸«à¸±à¸ª / à¹à¸­à¸à¹à¸à¸à¸à¹):</label>
+                        <input id="search-input" type="text" placeholder="à¸à¸´à¸¡à¸à¹à¹à¸à¸·à¹à¸­à¸à¹à¸à¸«à¸²..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                    </div>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <!-- Category Select -->
+                    <div>
+                        <label for="category-filter" class="text-xs font-semibold text-gray-400 block mb-1.5">à¸à¸£à¸°à¹à¸ à¸à¸à¸²à¸£à¹à¸ (Category):</label>
+                        <select id="category-filter" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                            <option value="ALL">à¸à¸±à¹à¸à¸«à¸¡à¸ (All Types)</option>
+                            <option value="Leader">Leader (à¸¥à¸µà¸à¹à¸à¸­à¸£à¹)</option>
+                            <option value="Character">Character (à¸à¸²à¹à¸£à¸à¹à¸à¸­à¸£à¹)</option>
+                            <option value="Event">Event (à¸­à¸µà¹à¸§à¸à¸à¹)</option>
+                            <option value="Stage">Stage (à¸ªà¹à¸à¸)</option>
+                        </select>
+                    </div>
+
+                    <!-- Color Filter Checkboxes -->
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 block mb-1.5">à¸ªà¸µà¸à¸²à¸£à¹à¸ (Color):</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-red-800 bg-red-950/20 text-red-500 transition duration-150" data-color="Red">à¹à¸à¸</button>
+                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-blue-800 bg-blue-950/20 text-blue-400 transition duration-150" data-color="Blue">à¸à¹à¸²</button>
+                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-green-800 bg-green-950/20 text-green-500 transition duration-150" data-color="Green">à¹à¸à¸µà¸¢à¸§</button>
+                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-yellow-800 bg-yellow-950/20 text-yellow-500 transition duration-150" data-color="Yellow">à¹à¸«à¸¥à¸·à¸­à¸</button>
+                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-gray-700 bg-gray-900 text-gray-400 transition duration-150" data-color="Black">à¸à¸³</button>
+                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-purple-800 bg-purple-950/20 text-purple-400 transition duration-150" data-color="Purple">à¸¡à¹à¸§à¸</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Grid Section -->
+            <div class="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-2xl space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                        <span>ð´</span> à¸à¸¥à¸±à¸à¸à¸²à¸£à¹à¸ (Card Database)
+                    </h3>
+                    <span id="filtered-count" class="text-xs bg-red-950 text-red-400 border border-red-900 px-3 py-1 rounded-full font-mono font-bold">
+                        à¸à¸³à¸¥à¸±à¸à¹à¸«à¸¥à¸...
+                    </span>
+                </div>
+
+                <div id="card-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <!-- Cards will be dynamically rendered here -->
+                    <div class="col-span-full py-20 text-center text-gray-500 italic">
+                        à¸à¸³à¸¥à¸±à¸à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­à¹à¸à¸´à¸£à¹à¸à¹à¸§à¸­à¸£à¹à¸«à¸¥à¸±à¸à¹à¸à¸·à¹à¸­à¹à¸«à¸¥à¸à¸à¸²à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸... â
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const PACKS_URL = "https://raw.githubusercontent.com/buhbbl/punk-records/main/english/packs.json";
+        const CARDS_BASE_URL = "https://raw.githubusercontent.com/buhbbl/punk-records/main/english/cards/";
+        
+        let allPacks = {};
+        let activePackCards = [];
+        let deck = {}; // {card_id: count}
+        let leader = null;
+        let selectedColors = new Set(); // Multi-select colors
+
+        // Initialize App
+        async function init() {
+            loadDeckFromStorage();
+            await fetchPacks();
+            setupEventListeners();
+        }
+
+        // Fetch list of packs and populate dropdown
+        async function fetchPacks() {
+            try {
+                const res = await fetch(PACKS_URL);
+                if (!res.ok) throw new Error("Failed to load packs");
+                allPacks = await res.json();
+                
+                const packSelector = document.getElementById("pack-selector");
+                packSelector.innerHTML = "";
+                
+                // Group packs for clean presentation (Boosters, Starters, Extra, etc.)
+                const packsArray = Object.values(allPacks);
+                
+                // Set order priority (boosters first, newer first)
+                packsArray.sort((a, b) => b.id.localeCompare(a.id));
+
+                packsArray.forEach(p => {
+                    const option = document.createElement("option");
+                    option.value = p.id;
+                    option.innerText = p.raw_title || `${p.code} - ${p.name}`;
+                    packSelector.appendChild(option);
+                });
+
+                // Auto select OP-01 initially or first item
+                const op01Option = packsArray.find(p => p.raw_title.includes("[OP-01]"));
+                if (op01Option) {
+                    packSelector.value = op01Option.id;
+                } else {
+                    packSelector.selectedIndex = 0;
+                }
+
+                await fetchCardsForSelectedPack();
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("card-grid").innerHTML = `
+                    <div class="col-span-full py-10 text-center text-red-500 font-bold bg-red-950/20 border border-red-900 rounded-xl">
+                        â à¹à¸«à¸¥à¸à¸à¸¸à¸à¸à¸²à¸£à¹à¸à¸¥à¹à¸¡à¹à¸«à¸¥à¸§ à¸à¸£à¸¸à¸à¸²à¸£à¸µà¹à¸à¸£à¸à¸«à¸à¹à¸²à¹à¸§à¹à¸à¹à¸«à¸¡à¹à¸­à¸µà¸à¸à¸£à¸±à¹à¸
+                    </div>
+                `;
+            }
+        }
+
+        // Fetch cards of selected pack
+        async function fetchCardsForSelectedPack() {
+            const packId = document.getElementById("pack-selector").value;
+            const countLabel = document.getElementById("filtered-count");
+            countLabel.innerText = "à¸à¸³à¸¥à¸±à¸à¸à¸¶à¸à¸à¹à¸­à¸¡à¸¹à¸¥...";
+            
+            try {
+                const res = await fetch(`${CARDS_BASE_URL}${packId}.json`);
+                if (!res.ok) throw new Error("Failed to fetch set cards");
+                activePackCards = await res.json();
+                
+                filterAndRender();
+            } catch (err) {
+                console.error(err);
+                document.getElementById("card-grid").innerHTML = `
+                    <div class="col-span-full py-10 text-center text-red-500 font-bold bg-red-950/20 border border-red-900 rounded-xl">
+                        â à¹à¸¡à¹à¸ªà¸²à¸¡à¸²à¸£à¸à¸à¸¶à¸à¸£à¸¹à¸à¸ à¸²à¸à¹à¸¥à¸°à¸à¸²à¸£à¹à¸à¹à¸à¸à¸¸à¸à¸à¸µà¹à¹à¸à¹à¸à¸±à¹à¸§à¸à¸£à¸²à¸§
+                    </div>
+                `;
+            }
+        }
+
+        // Apply filters (text search, colors, category)
+        function filterAndRender() {
+            const query = document.getElementById("search-input").value.toLowerCase().trim();
+            const cat = document.getElementById("category-filter").value;
+            
+            const filtered = activePackCards.filter(card => {
+                // Category match
+                if (cat !== "ALL" && card.category !== cat) return false;
+
+                // Color match (AND filter if colors are selected)
+                if (selectedColors.size > 0) {
+                    const hasColor = card.colors.some(col => selectedColors.has(col));
+                    if (!hasColor) return false;
+                }
+
+                // Text search match (checks name, card ID, effect text, and types)
+                if (query !== "") {
+                    const id = card.id ? card.id.toLowerCase() : "";
+                    const name = card.name ? card.name.toLowerCase() : "";
+                    const effect = card.effect ? card.effect.toLowerCase() : "";
+                    const types = card.types ? card.types.join(" ").toLowerCase() : "";
+                    
+                    if (!id.includes(query) && !name.includes(query) && !effect.includes(query) && !types.includes(query)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            document.getElementById("filtered-count").innerText = `à¸à¸ ${filtered.length} à¹à¸`;
+            renderGrid(filtered);
+        }
+
+        // Render card grid with referrerpolicy bypass proxy
+        function renderGrid(cards) {
+            const grid = document.getElementById("card-grid");
+            grid.innerHTML = "";
+
+            if (cards.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-gray-500 italic">
+                        à¹à¸¡à¹à¸à¸à¸à¸²à¸£à¹à¸à¸à¸£à¸à¸à¸²à¸¡à¹à¸à¸·à¹à¸­à¸à¹à¸à¸à¹à¸à¸«à¸² ð
+                    </div>
+                `;
+                return;
+            }
+
+            cards.forEach(card => {
+                const isLeader = card.category === "Leader";
+                const countInDeck = deck[card.id] || 0;
+
+                // Create proxy image url using weserv to bypass all hotlink protection perfectly
+                const cleanImgUrl = card.image ? card.image.split("?")[0] : "";
+                const proxiedImgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanImgUrl)}&w=260&error=ssl`;
+
+                const cardDiv = document.createElement("div");
+                cardDiv.className = "bg-[#1f1f1f] border border-gray-800 rounded-2xl p-3 flex flex-col justify-between transition duration-200 card-glow shadow-md";
+                
+                cardDiv.innerHTML = `
+                    <div class="space-y-3">
+                        <!-- Image Container with loader -->
+                        <div class="relative group overflow-hidden rounded-xl bg-neutral-900 aspect-[3/4] flex items-center justify-center">
+                            <img src="${proxiedImgUrl}" alt="${card.name}" class="w-full h-full object-contain rounded-xl transition duration-300" onerror="this.onerror=null; this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png';">
+                        </div>
+
+                        <!-- Card Info -->
+                        <div class="space-y-1">
+                            <h4 class="text-xs font-bold truncate text-white" title="${card.name}">${card.name}</h4>
+                            <div class="flex justify-between items-center text-[10px] text-gray-400 font-mono">
+                                <span>${card.id}</span>
+                                <span>${card.category}</span>
+                            </div>
+                            <!-- Color Badge -->
+                            <div class="flex gap-1">
+                                ${card.colors.map(col => `
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                                        col === 'Red' ? 'bg-red-950/80 text-red-400 border border-red-900/40' :
+                                        col === 'Blue' ? 'bg-blue-950/80 text-blue-400 border border-blue-900/40' :
+                                        col === 'Green' ? 'bg-green-950/80 text-green-400 border border-green-900/40' :
+                                        col === 'Yellow' ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-900/40' :
+                                        col === 'Black' ? 'bg-gray-900 text-gray-400 border border-gray-800' :
+                                        'bg-purple-950/80 text-purple-400 border border-purple-900/40'
+                                    } border">${col}</span>
+                                `).join("")}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4 pt-2 border-t border-gray-800/60">
+                        ${isLeader ? `
+                            <button onclick="setAsLeader('${card.id}')" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xs py-2 rounded-lg transition duration-150">
+                                à¹à¸¥à¸·à¸­à¸à¹à¸à¹à¸ Leader ð
+                            </button>
+                        ` : `
+                            <button onclick="addCardToDeck('${card.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 px-3 rounded-lg transition duration-150 flex justify-between items-center">
+                                <span>à¹à¸à¸´à¹à¸¡à¸à¸²à¸£à¹à¸</span>
+                                <span class="bg-red-900 text-red-200 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">${countInDeck}</span>
+                            </button>
+                        `}
+                    </div>
+                `;
+                
+                grid.appendChild(cardDiv);
+            });
+        }
+
+        // Leader Handler
+        window.setAsLeader = function(cardId) {
+            // Find card metadata
+            const card = activePackCards.find(c => c.id === cardId);
+            if (!card) return;
+            
+            leader = card;
+            saveDeckToStorage();
+            updateDeckUI();
+            filterAndRender();
+        };
+
+        window.removeLeader = function() {
+            leader = null;
+            saveDeckToStorage();
+            updateDeckUI();
+            filterAndRender();
+        };
+
+        // Deck Add/Remove Handlers
+        window.addCardToDeck = function(cardId) {
+            const currentCount = deck[cardId] || 0;
+            const totalCards = Object.values(deck).reduce((a, b) => a + b, 0);
+
+            if (totalCards >= 50) {
+                alert("à¹à¸à¹à¸à¸«à¸¥à¸±à¸à¸¡à¸µà¸à¸²à¸£à¹à¸à¸à¸£à¸à¸à¸³à¸«à¸à¸ 50 à¹à¸à¹à¸£à¸µà¸¢à¸à¸£à¹à¸­à¸¢à¹à¸¥à¹à¸§!");
+                return;
+            }
+
+            if (currentCount >= 4) {
+                alert("à¹à¸ªà¹à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¸µà¸¢à¸§à¸à¸±à¸à¸à¹à¸³à¸à¸±à¸à¹à¸à¹à¸ªà¸¹à¸à¸ªà¸¸à¸à¹à¸¡à¹à¹à¸à¸´à¸ 4 à¹à¸!");
+                return;
+            }
+
+            deck[cardId] = currentCount + 1;
+            saveDeckToStorage();
+            updateDeckUI();
+            
+            // Re-render single element or full grid to update badges
+            filterAndRender();
+        };
+
+        window.subtractCardFromDeck = function(cardId) {
+            if (deck[cardId]) {
+                deck[cardId] -= 1;
+                if (deck[cardId] <= 0) {
+                    delete deck[cardId];
+                }
+                saveDeckToStorage();
+                updateDeckUI();
+                filterAndRender();
+            }
+        };
+
+        // Render Deck List & Verification & Cost Curve
+        function updateDeckUI() {
+            const listContainer = document.getElementById("deck-items-list");
+            listContainer.innerHTML = "";
+
+            const totalQty = Object.values(deck).reduce((a, b) => a + b, 0);
+            document.getElementById("deck-qty").innerText = totalQty;
+            document.getElementById("deck-progress").style.width = `${(totalQty / 50) * 100}%`;
+
+            // Active Leader Slot
+            const leaderDisplay = document.getElementById("leader-display");
+            if (leader) {
+                const proxiedImgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(leader.image.split("?")[0])}&w=160&error=ssl`;
+                leaderDisplay.innerHTML = `
+                    <div class="flex gap-4 items-center w-full text-left">
+                        <img src="${proxiedImgUrl}" class="w-16 rounded-lg object-contain bg-neutral-900 border border-gray-700 shadow" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-bold text-yellow-500 truncate">${leader.name}</h4>
+                            <p class="text-[10px] text-gray-400 font-mono">${leader.id}</p>
+                            <div class="flex gap-1 mt-1">
+                                ${leader.colors.map(col => `<span class="text-[9px] px-1 bg-red-950/60 border border-red-900 text-red-400 font-bold rounded">${col}</span>`).join("")}
+                            </div>
+                        </div>
+                        <button onclick="removeLeader()" class="text-xs text-red-500 hover:text-red-400 font-bold border border-red-900/50 bg-red-950/20 px-2 py-1 rounded">à¹à¸à¸¥à¸µà¹à¸¢à¸ â</button>
+                    </div>
+                `;
+            } else {
+                leaderDisplay.innerHTML = `
+                    <div class="text-sm text-gray-500 italic">à¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹</div>
+                    <p class="text-xs text-gray-600 mt-1">à¸à¸à¸à¸¸à¹à¸¡ "à¹à¸¥à¸·à¸­à¸à¹à¸à¹à¸ Leader" à¸à¸µà¹à¸à¸²à¸£à¹à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹à¸à¹à¸²à¸à¸à¸§à¸²</p>
+                `;
+            }
+
+            // Render list of deck cards
+            const deckItems = Object.entries(deck);
+            if (deckItems.length === 0) {
+                listContainer.innerHTML = `<div class="text-center py-8 text-gray-500 italic text-sm">à¸¢à¸±à¸à¹à¸¡à¹à¸¡à¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸«à¸¥à¸±à¸</div>`;
+            } else {
+                // Find card info from activePackCards (or fallback if from another set)
+                deckItems.forEach(([cardId, count]) => {
+                    let card = activePackCards.find(c => c.id === cardId);
+                    
+                    // Mock card model if not loaded yet
+                    if (!card) {
+                        card = { id: cardId, name: cardId, colors: ["Red"], cost: 0 };
+                    }
+
+                    // Validate card color matches Leader color
+                    let isMismatch = false;
+                    let validationBadge = "";
+                    if (leader) {
+                        isMismatch = !card.colors.some(col => leader.colors.includes(col));
+                        if (isMismatch) {
+                            validationBadge = `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[8px] bg-red-950 text-red-400 font-bold border border-red-900/50">à¸ªà¸µà¹à¸¡à¹à¸à¸£à¸ â ï¸</span>`;
+                        }
+                    }
+
+                    const row = document.createElement("div");
+                    row.className = "flex justify-between items-center bg-[#222] px-3 py-2 rounded-xl border border-gray-800/80 hover:border-gray-700/80 transition shadow-inner";
+                    row.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-2 text-left">
+                            <div class="text-xs font-semibold text-white truncate">${card.name}</div>
+                            <div class="text-[9px] text-gray-400 font-mono">${cardId} ${validationBadge}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="subtractCardFromDeck('${cardId}')" class="bg-[#1a1a1a] hover:bg-gray-800 text-white rounded-lg w-6 h-6 flex items-center justify-center text-xs font-bold border border-gray-800">â</button>
+                            <span class="text-xs font-bold text-red-500 font-mono w-4 text-center">${count}</span>
+                            <button onclick="addCardToDeck('${cardId}')" class="bg-[#1a1a1a] hover:bg-gray-800 text-white rounded-lg w-6 h-6 flex items-center justify-center text-xs font-bold border border-gray-800">â</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(row);
+                });
+            }
+
+            // Rules validator messaging
+            const validationBox = document.getElementById("validation-box");
+            if (!leader) {
+                validationBox.innerHTML = `<span>â¹ï¸</span> <span>à¸à¸£à¸¸à¸à¸²à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹ à¹à¸à¸·à¹à¸­à¸à¸£à¸§à¸à¸ªà¸­à¸à¸à¸§à¸²à¸¡à¸ªà¸­à¸à¸à¸¥à¹à¸­à¸à¸à¸­à¸à¸ªà¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸</span>`;
+                validationBox.className = "text-xs p-3 rounded-lg bg-yellow-950/30 border border-yellow-900/50 text-yellow-400 flex items-start gap-2";
+            } else if (totalQty < 50) {
+                validationBox.innerHTML = `<span>â¹ï¸</span> <span>à¹à¸à¹à¸à¸¢à¸±à¸à¸à¸²à¸à¸à¸²à¸£à¹à¸à¸­à¸µà¸ <strong>${50 - totalQty} à¹à¸</strong> à¹à¸à¸·à¹à¸­à¹à¸«à¹à¸à¸£à¸ 50 à¹à¸à¸à¸­à¸à¸µ</span>`;
+                validationBox.className = "text-xs p-3 rounded-lg bg-yellow-950/30 border border-yellow-900/50 text-yellow-400 flex items-start gap-2";
+            } else if (totalQty === 50) {
+                // Check if any card has color mismatch
+                let hasColorError = false;
+                Object.keys(deck).forEach(cid => {
+                    const card = activePackCards.find(c => c.id === cid);
+                    if (card) {
+                        const match = card.colors.some(col => leader.colors.includes(col));
+                        if (!match) hasColorError = true;
+                    }
+                });
+
+                if (hasColorError) {
+                    validationBox.innerHTML = `<span>â ï¸</span> <span>à¹à¸à¹à¸à¸à¸£à¸ 50 à¹à¸à¹à¸¥à¹à¸§ à¹à¸à¹à¸¡à¸µ<strong>à¸à¸²à¸£à¹à¸à¸ªà¸µà¹à¸¡à¹à¸à¸£à¸à¸à¸±à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹à¸à¸­à¸à¸à¸¸à¸</strong></span>`;
+                    validationBox.className = "text-xs p-3 rounded-lg bg-red-950/30 border border-red-900/50 text-red-400 flex items-start gap-2";
+                } else {
+                    validationBox.innerHTML = `<span>â</span> <span>à¸¢à¸­à¸à¹à¸¢à¸µà¹à¸¢à¸¡à¸¡à¸²à¸! à¹à¸à¹à¸à¸à¸­à¸à¸à¸¸à¸à¸à¸¹à¸à¸à¹à¸­à¸à¸à¸²à¸¡à¸à¸à¹à¸à¹à¸à¹à¸¥à¸°à¸à¸£à¹à¸­à¸¡à¸à¸³à¹à¸à¹à¸¥à¹à¸à¹à¸¥à¹à¸§</span>`;
+                    validationBox.className = "text-xs p-3 rounded-lg bg-green-950/30 border border-green-900/50 text-green-400 flex items-start gap-2";
+                }
+            }
+
+            // Render Cost Curve Chart
+            renderCostCurve();
+
+            // Export Text area rendering
+            const textLines = [];
+            if (leader) {
+                textLines.push(`1x ${leader.id}`);
+            }
+            Object.entries(deck).forEach(([id, count]) => {
+                textLines.push(`${count}x ${id}`);
+            });
+            document.getElementById("export-textarea").value = textLines.join("\n");
+        }
+
+        // Render cost curve dynamic bars
+        function renderCostCurve() {
+            const section = document.getElementById("cost-curve-section");
+            const container = document.getElementById("curve-chart-container");
+            container.innerHTML = "";
+
+            if (Object.keys(deck).length === 0) {
+                section.classList.add("hidden");
+                return;
+            }
+            section.classList.remove("hidden");
+
+            // Aggregate counts by cost values (0 to 10)
+            const costCounts = Array(11).fill(0);
+            Object.entries(deck).forEach(([cardId, count]) => {
+                const card = activePackCards.find(c => c.id === cardId);
+                if (card) {
+                    const cost = card.cost !== null ? Math.min(card.cost, 10) : 0;
+                    costCounts[cost] += count;
+                }
+            });
+
+            const maxQty = Math.max(...costCounts, 1);
+
+            costCounts.forEach((qty, costIndex) => {
+                const heightPercent = (qty / maxQty) * 100;
+                
+                const barWrapper = document.createElement("div");
+                barWrapper.className = "flex flex-col items-center flex-1 group relative h-full justify-end";
+                barWrapper.innerHTML = `
+                    <!-- Tooltip -->
+                    <span class="absolute -top-6 bg-red-600 text-white font-mono font-bold text-[9px] px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition duration-150 pointer-events-none">${qty} à¹à¸</span>
+                    <!-- Bar -->
+                    <div class="bg-gradient-to-t from-red-800 to-red-600 w-3/5 rounded-t-sm transition-all duration-300 shadow-lg" style="height: ${heightPercent}%"></div>
+                `;
+                container.appendChild(barWrapper);
+            });
+        }
+
+        // Setup UI Event listeners
+        function setupEventListeners() {
+            // Dropdown change
+            document.getElementById("pack-selector").addEventListener("change", fetchCardsForSelectedPack);
+            
+            // Search inputs
+            document.getElementById("search-input").addEventListener("input", filterAndRender);
+            document.getElementById("category-filter").addEventListener("change", filterAndRender);
+
+            // Import Box toggle
+            const importBtn = document.getElementById("import-toggle-btn");
+            const importBox = document.getElementById("import-box");
+            importBtn.addEventListener("click", () => {
+                if (importBox.classList.contains("hidden")) {
+                    importBox.classList.remove("hidden");
+                    importBtn.innerText = "à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² â";
+                } else {
+                    importBox.classList.add("hidden");
+                    importBtn.innerText = "à¸à¸¥à¸´à¸à¹à¸à¸·à¹à¸­à¹à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² ð¥";
+                }
+            });
+
+            // Handle Import Logic
+            document.getElementById("confirm-import-btn").addEventListener("click", () => {
+                const val = document.getElementById("import-textarea").value;
+                if (!val.trim()) return;
+
+                const lines = val.split("\n");
+                const newDeck = {};
+                let newLeader = leader;
+
+                lines.forEach(line => {
+                    const match = line.trim().match(/^(\d+)x\s*([A-Za-z0-9-_]+)/i);
+                    if (match) {
+                        const count = parseInt(match[1]);
+                        const id = match[2].toUpperCase();
+                        
+                        // Treat as leader if count is 1 and set/ID structure is leader-like
+                        if (count === 1 && (id.endsWith("-001") || id.endsWith("_p1") || id.includes("L"))) {
+                            // Quick lookup or fallback placeholder
+                            newLeader = { id: id, name: id, colors: ["Red"], image: `https://en.onepiece-cardgame.com/images/cardlist/card/${id}.png` };
+                        } else {
+                            newDeck[id] = count;
+                        }
+                    }
+                });
+
+                deck = newDeck;
+                leader = newLeader;
+                saveDeckToStorage();
+                updateDeckUI();
+                filterAndRender();
+
+                importBox.classList.add("hidden");
+                importBtn.innerText = "à¸à¸¥à¸´à¸à¹à¸à¸·à¹à¸­à¹à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² ð¥";
+                alert("à¸à¸³à¹à¸à¹à¸²à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸à¹à¸£à¸µà¸¢à¸à¸£à¹à¸­à¸¢à¹à¸¥à¹à¸§!");
+            });
+
+            // Multi color selection buttons
+            const colorButtons = document.querySelectorAll(".color-btn");
+            colorButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const col = btn.getAttribute("data-color");
+                    if (selectedColors.has(col)) {
+                        selectedColors.delete(col);
+                        btn.classList.add("bg-red-950/20", "text-red-500", "border-red-800");
+                        btn.classList.remove("bg-red-600", "text-white");
+                    } else {
+                        selectedColors.add(col);
+                        btn.classList.remove("bg-red-950/20", "text-red-500", "border-red-800");
+                        btn.classList.add("bg-red-600", "text-white");
+                    }
+                    filterAndRender();
+                });
+            });
+
+            // Clear all deck
+            document.getElementById("clear-deck-btn").addEventListener("click", () => {
+                if (confirm("à¸à¸¸à¸à¹à¸à¹à¹à¸à¸«à¸£à¸·à¸­à¹à¸¡à¹à¸§à¹à¸²à¸à¹à¸­à¸à¸à¸²à¸£à¸¥à¹à¸²à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸à¸±à¹à¸à¸«à¸¡à¸?")) {
+                    deck = {};
+                    leader = null;
+                    saveDeckToStorage();
+                    updateDeckUI();
+                    filterAndRender();
+                }
+            });
+        }
+
+        // Local Storage Helpers
+        function saveDeckToStorage() {
+            localStorage.setItem("deck_builder_deck", JSON.stringify(deck));
+            if (leader) {
+                localStorage.setItem("deck_builder_leader", JSON.stringify(leader));
+            } else {
+                localStorage.removeItem("deck_builder_leader");
+            }
+        }
+
+        function loadDeckFromStorage() {
+            const savedDeck = localStorage.getItem("deck_builder_deck");
+            const savedLeader = localStorage.getItem("deck_builder_leader");
+            
+            if (savedDeck) {
+                deck = JSON.parse(savedDeck);
+            }
+            if (savedLeader) {
+                leader = JSON.parse(savedLeader);
+            }
+        }
+
+        // Launch Core
+        init();
+    </script>
+</body>
+</html>
