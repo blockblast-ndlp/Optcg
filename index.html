@@ -513,7 +513,7 @@
                 displayCardEffect(card);
             } else {
                 const packId = card.pack_id;
-                fetch(`https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${packId}/${cardId}.json`)
+                fetch(`${activePunkRecordsMirror}english-asia/cards/${packId}/${cardId}.json`)
                     .then(res => {
                         if (!res.ok) throw new Error("Card detailed fetch failed");
                         return res.json();
@@ -643,7 +643,7 @@
                 await Promise.all(batch.map(async (card) => {
                     const cardId = card.id || card.card_id;
                     try {
-                        const url = `https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${card.pack_id}/${cardId}.json`;
+                        const url = `https://images.weserv.nl/?url=` + encodeURIComponent(`${activePunkRecordsMirror}english-asia/cards/${card.pack_id}/${cardId}.json`);
                         const res = await fetch(url);
                         if (res.ok) {
                             const details = await res.json();
@@ -669,85 +669,122 @@
         }
 
 
-        // CDN Sources
-        const PACKS_API = "https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/packs.json";
-        const PRICES_API = "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/prices/summary.json";
+        
+        // List of alternative mirrors for punk-records
+        const PUNK_RECORDS_MIRRORS = [
+            "https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/",
+            "https://raw.githubusercontent.com/buhbbl/punk-records/main/",
+            "https://fastly.jsdelivr.net/gh/buhbbl/punk-records@main/",
+            "https://gcore.jsdelivr.net/gh/buhbbl/punk-records@main/"
+        ];
 
-        // Initialize application
+        // List of alternative mirrors for michalkiral/optcg-data
+        const PRICES_MIRRORS = [
+            "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/",
+            "https://raw.githubusercontent.com/michalkiral/optcg-data/main/",
+            "https://fastly.jsdelivr.net/gh/michalkiral/optcg-data@main/",
+            "https://gcore.jsdelivr.net/gh/michalkiral/optcg-data@main/"
+        ];
+
+        let activePunkRecordsMirror = PUNK_RECORDS_MIRRORS[0];
+
+        // Fetch helper with timeout and fallback mirrors
+        async function fetchWithFallback(mirrors, subPath, timeoutMs = 4000) {
+            for (let i = 0; i < mirrors.length; i++) {
+                const url = `${mirrors[i]}${subPath}`;
+                try {
+                    const controller = new AbortController();
+                    const id = setTimeout(() => controller.abort(), timeoutMs);
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(id);
+                    if (response.ok) {
+                        if (mirrors === PUNK_RECORDS_MIRRORS) {
+                            activePunkRecordsMirror = mirrors[i];
+                        }
+                        return await response.json();
+                    }
+                } catch (e) {
+                    console.warn(`Mirror failed (${url}):`, e);
+                }
+            }
+            throw new Error(`All mirrors failed for path: ${subPath}`);
+        }
+
+        // CDN Sources
+        // PACKS_API subpath used with fetchWithFallback
+        // PRICES_API subpath used with fetchWithFallback
+
+        // Initialize application concurrently to prevent single slow fetches from blocking UI
         window.addEventListener('DOMContentLoaded', async () => {
-            await fetchPriceDatabase();
-            await fetchMasterCardDatabase();
-            await fetchPacksList();
             initSavedDecksDropdown();
             updateSearcherOdds();
+            
+            // Fire both price and master card db requests in parallel
+            const pricePromise = fetchPriceDatabase();
+            const masterDbPromise = fetchMasterCardDatabase();
+            
+            // Start loading packs as soon as master DB begins or is fast-tracked
+            await Promise.all([pricePromise, masterDbPromise]);
+            await fetchPacksList();
         });
 
                 // 1.5 Fetch Master Card Database once at startup
         async function fetchMasterCardDatabase() {
             try {
-                const response = await fetch("https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/index/cards_by_id.json");
-                if (response.ok) {
-                    masterCardDatabase = await response.json();
-                }
+                masterCardDatabase = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/index/cards_by_id.json", 6000);
             } catch (e) {
-                console.warn("Failed to fetch master card index", e);
+                console.error("Critical: Failed to fetch master card index", e);
             }
         }
 
         // 1. Fetch Price data
         async function fetchPriceDatabase() {
             try {
-                const response = await fetch(PRICES_API);
-                if (response.ok) {
-                    const data = await response.json();
-                    priceDatabase = data.cards || {};
-                }
+                const data = await fetchWithFallback(PRICES_MIRRORS, "data/prices/summary.json", 4000);
+                priceDatabase = data.cards || {};
             } catch (e) {
-                console.warn("Failed to fetch price summaries, continuing anyway.", e);
+                console.warn("Continuing without price summaries.", e);
             }
         }
 
         // 2. Fetch Set lists and build dropdown selector
         async function fetchPacksList() {
             try {
-                const response = await fetch(PACKS_API);
-                if (response.ok) {
-                    const data = await response.json();
-                    packsList = Object.values(data);
+                const data = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/packs.json", 4000);
+                packsList = Object.values(data);
+                
+                // Filter sets list to keep only boosters, extra packs, starter decks, promos
+                const select = document.getElementById('set-select');
+                select.innerHTML = ''; // Clear loaded spinner
+                
+                // Sort packs list (newest first based on code or ID)
+                packsList.sort((a, b) => b.id.localeCompare(a.id));
+
+                // Prepend ALL option at the top as the new gorgeous default search mode
+                const allOption = document.createElement('option');
+                allOption.value = 'ALL';
+                allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
+                allOption.selected = true; // Default to searching everything!
+                select.appendChild(allOption);
+
+                packsList.forEach(pack => {
+                    const option = document.createElement('option');
+                    option.value = pack.id;
                     
-                    // Filter sets list to keep only boosters, extra packs, starter decks, promos
-                    const select = document.getElementById('set-select');
-                    select.innerHTML = ''; // Clear loaded spinner
-                    
-                    // Sort packs list (newest first based on code or ID)
-                    packsList.sort((a, b) => b.id.localeCompare(a.id));
+                    // Parse name
+                    const title = pack.raw_title || pack.title_parts.title;
+                    option.textContent = title;
+                    select.appendChild(option);
+                });
 
-                    // Prepend ALL option at the top as the new gorgeous default search mode
-                    const allOption = document.createElement('option');
-                    allOption.value = 'ALL';
-                    allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
-                    allOption.selected = true; // Default to searching everything!
-                    select.appendChild(allOption);
-
-                    packsList.forEach(pack => {
-                        const option = document.createElement('option');
-                        option.value = pack.id;
-                        
-                        // Parse name
-                        const title = pack.raw_title || pack.title_parts.title;
-                        option.textContent = title;
-                        select.appendChild(option);
-                    });
-
-                    // Trigger first cards load
-                    await loadSetCards();
-                }
+                // Trigger first cards load
+                await loadSetCards();
             } catch (e) {
                 document.getElementById('cards-grid').innerHTML = `
                     <div class="col-span-full py-16 text-center text-pirate-red">
                         <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
-                        <p class="text-sm font-semibold">ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ฐานข้อมูลได้</p>
-                        <p class="text-xs text-zinc-500 mt-1">กรุณาลองเปิดใหม่อีกครั้งในภายหลัง</p>
+                        <p class="text-sm font-semibold">การเชื่อมโยงขัดข้อง (เซิร์ฟเวอร์หลักช้าหรือไม่มีอินเทอร์เน็ต)</p>
+                        <p class="text-xs text-zinc-500 mt-2">ระบบล้มเหลวในการเชื่อมต่อ CDN ทั้งหมด กรุณาลองตรวจสอบสัญญาณอินเทอร์เน็ตหรือรีเฟรชหน้าเว็บอีกครั้งครับ</p>
                     </div>`;
             }
         }
@@ -766,7 +803,15 @@
 
             try {
                 if (!masterCardDatabase || Object.keys(masterCardDatabase).length === 0) {
-                    // Try fetching again if not loaded
+                    // Gracefully poll for up to 3 seconds in case concurrent fetch is still running
+                    for (let attempt = 0; attempt < 15; attempt++) {
+                        if (masterCardDatabase && Object.keys(masterCardDatabase).length > 0) break;
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+                }
+                
+                if (!masterCardDatabase || Object.keys(masterCardDatabase).length === 0) {
+                    // Try direct fetch one more time with alternative mirrors
                     await fetchMasterCardDatabase();
                 }
                 
@@ -909,7 +954,7 @@
                 // ตรวจสอบและดึงข้อมูลภาษาอังกฤษเพิ่มเติมในเบื้องหลังแบบเงียบๆ เพื่อความรวดเร็วและใช้ในการสืบค้นเอฟเฟกต์แบบละเอียด
                 if (card.effect === undefined) {
                     const packId = card.pack_id;
-                    fetch(`https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${packId}/${cardId}.json`)
+                    fetch(`${activePunkRecordsMirror}english-asia/cards/${packId}/${cardId}.json`)
                         .then(res => res.json())
                         .then(fullData => {
                             card.effect = fullData.effect || "-";
