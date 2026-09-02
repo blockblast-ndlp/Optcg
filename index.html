@@ -286,6 +286,7 @@
         // --- System Data States ---
         let packsList = [];
         let cardDatabase = [];
+        let masterCardDatabase = {};
         let priceDatabase = {};
         
         let deck = {}; // { cardId: count }
@@ -301,9 +302,22 @@
         // Initialize application
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchPriceDatabase();
+            await fetchMasterCardDatabase();
             await fetchPacksList();
             updateSearcherOdds();
         });
+
+                // 1.5 Fetch Master Card Database once at startup
+        async function fetchMasterCardDatabase() {
+            try {
+                const response = await fetch("https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/index/cards_by_id.json");
+                if (response.ok) {
+                    masterCardDatabase = await response.json();
+                }
+            } catch (e) {
+                console.warn("Failed to fetch master card index", e);
+            }
+        }
 
         // 1. Fetch Price data
         async function fetchPriceDatabase() {
@@ -374,15 +388,43 @@
                 </div>`;
 
             try {
-                const cardsApi = `https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${packId}.json`;
-                const response = await fetch(cardsApi);
-                if (response.ok) {
-                    cardDatabase = await response.json();
-                    filterCards();
-                } else {
-                    throw new Error("Unable to fetch cards data");
+                if (!masterCardDatabase || Object.keys(masterCardDatabase).length === 0) {
+                    // Try fetching again if not loaded
+                    await fetchMasterCardDatabase();
                 }
+                
+                if (!masterCardDatabase || Object.keys(masterCardDatabase).length === 0) {
+                    throw new Error("Master card database is empty");
+                }
+                
+                // Filter local masterCardDatabase by matching pack_id
+                cardDatabase = Object.values(masterCardDatabase).filter(card => card.pack_id === packId);
+                
+                if (cardDatabase.length === 0) {
+                    // Fallback filtering by prefix matching of the set if pack_id didn't match (for safety)
+                    const selectedPack = packsList.find(p => p.id === packId);
+                    if (selectedPack) {
+                        const title = selectedPack.raw_title || selectedPack.title_parts.title || "";
+                        // Extract OP-XX or EB-XX or ST-XX
+                        const codeMatch = title.match(/(OP-\d+|EB-\d+|ST-\d+)/i);
+                        if (codeMatch) {
+                            const code = codeMatch[1].replace("-", "").toUpperCase(); // e.g. "OP16"
+                            cardDatabase = Object.values(masterCardDatabase).filter(card => {
+                                const cid = card.card_id || card.id || "";
+                                return cid.replace("-", "").toUpperCase().startsWith(code);
+                            });
+                        }
+                    }
+                }
+                
+                // Fallback normalization of fields
+                cardDatabase.forEach(card => {
+                    if (!card.id) card.id = card.card_id;
+                });
+                
+                filterCards();
             } catch (e) {
+                console.error(e);
                 grid.innerHTML = `
                     <div class="col-span-full py-16 text-center text-pirate-red">
                         <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
@@ -436,7 +478,7 @@
             grid.innerHTML = '';
 
             cards.forEach(card => {
-                const cardId = card.id;
+                const cardId = card.id || card.card_id;
                 const countInDeck = deck[cardId] || 0;
                 
                 // Get image url
@@ -516,9 +558,9 @@
             const leaderActive = document.getElementById('leader-active');
             leaderActive.classList.remove('hidden');
             
-            document.getElementById('leader-img').src = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id}.png`;
+            document.getElementById('leader-img').src = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id || card.card_id}.png`;
             document.getElementById('leader-name').textContent = card.name;
-            document.getElementById('leader-id').textContent = card.id;
+            document.getElementById('leader-id').textContent = card.id || card.card_id;
             
             // Build leader colors badge
             const colorsContainer = document.getElementById('leader-colors');
@@ -546,7 +588,7 @@
 
         // 5. Deck Modification Logic
         function addToDeck(card) {
-            const cardId = card.id;
+            const cardId = card.id || card.card_id;
             const currentCount = deck[cardId] || 0;
             
             if (currentCount >= 4) {
