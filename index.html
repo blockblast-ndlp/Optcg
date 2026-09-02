@@ -73,9 +73,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="clearCacheAndUpdate()" class="text-xs bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-full transition flex items-center gap-1">
-                    <i class="fa-solid fa-arrows-rotate"></i> อัปเดตข้อมูลการ์ดล่าสุด
-                </button>
                 <span class="text-xs bg-zinc-800 text-pirate-accent border border-zinc-700 px-3 py-1.5 rounded-full font-mono">
                     <i class="fa-solid fa-cloud-bolt mr-1"></i> Static Hosted (GitHub Pages Ready)
                 </span>
@@ -363,7 +360,7 @@
                     <!-- Spining Load Indicator -->
                     <div class="col-span-full py-16 text-center text-zinc-500">
                         <i class="fa-solid fa-spinner fa-spin text-3xl text-pirate-red mb-3"></i>
-                        <p class="text-sm font-semibold" id="loading-status-text">กำลังเชื่อมโยงและโหลดคลังข้อมูล One Piece TCG...</p>
+                        <p class="text-sm">กำลังเชื่อมโยงและโหลดคลังข้อมูล One Piece TCG...</p>
                     </div>
                 </div>
             </div>
@@ -691,150 +688,75 @@
 
         let activePunkRecordsMirror = PUNK_RECORDS_MIRRORS[0];
 
-        // Fetch helper with timeout and fallback mirrors
-                function updateLoadingStatus(msg) {
-            const statusEl = document.getElementById('loading-status-text');
-            if (statusEl) {
-                statusEl.textContent = msg;
-            }
-        }
-
-        // Fetch helper with timeout and fallback mirrors
+        // Fetch helper with timeout and fallback mirrors (extremely robust with Safari AbortController safety)
         async function fetchWithFallback(mirrors, subPath, timeoutMs = 4000) {
-            let lastError = null;
             for (let i = 0; i < mirrors.length; i++) {
                 const url = `${mirrors[i]}${subPath}`;
-                const filename = subPath.split('/').pop();
-                updateLoadingStatus(`กำลังโหลด: ${filename} (ช่องทางที่ ${i+1}/${mirrors.length})...`);
+                let id = null;
                 try {
-                    const controller = new AbortController();
-                    const id = setTimeout(() => controller.abort(), timeoutMs);
-                    const response = await fetch(url, { signal: controller.signal });
-                    clearTimeout(id);
-                    if (response.ok) {
-                        if (mirrors === PUNK_RECORDS_MIRRORS) {
-                            activePunkRecordsMirror = mirrors[i];
-                        }
-                        return await response.json();
+                    // Check if AbortController is supported (older iOS Safari / Private browsing safety)
+                    const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                    const signal = controller ? controller.signal : null;
+                    if (controller) {
+                        id = setTimeout(() => {
+                            try { controller.abort(); } catch(err){}
+                        }, timeoutMs);
                     }
+                    
+                    const response = await fetch(url, signal ? { signal } : {});
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (id) { clearTimeout(id); id = null; }
+                    if (mirrors === PUNK_RECORDS_MIRRORS) {
+                        activePunkRecordsMirror = mirrors[i];
+                    }
+                    return data;
                 } catch (e) {
                     console.warn(`Mirror failed (${url}):`, e);
-                    lastError = e;
+                } finally {
+                    if (id) clearTimeout(id);
                 }
             }
-            throw lastError || new Error(`All mirrors failed for path: ${subPath}`);
+            throw new Error(`All mirrors failed for path: ${subPath}`);
         }
 
-        function tryLoadFromCache() {
-            try {
-                const cachedDb = localStorage.getItem('kaizoku_cache_master_db_v3');
-                const cachedPacks = localStorage.getItem('kaizoku_cache_packs_v3');
-                const cachedPrices = localStorage.getItem('kaizoku_cache_prices_v3');
-                const cachedTime = localStorage.getItem('kaizoku_cache_time_v3');
-                
-                if (cachedDb && cachedPacks) {
-                    masterCardDatabase = JSON.parse(cachedDb);
-                    packsList = JSON.parse(cachedPacks);
-                    if (cachedPrices) {
-                        priceDatabase = JSON.parse(cachedPrices);
-                    }
-                    return true;
-                }
-            } catch (e) {
-                console.warn("Failed to load from localStorage cache:", e);
-            }
-            return false;
-        }
+        // CDN Sources
+        // PACKS_API subpath used with fetchWithFallback
+        // PRICES_API subpath used with fetchWithFallback
 
-        function saveToCache() {
-            try {
-                localStorage.setItem('kaizoku_cache_master_db_v3', JSON.stringify(masterCardDatabase));
-                localStorage.setItem('kaizoku_cache_packs_v3', JSON.stringify(packsList));
-                localStorage.setItem('kaizoku_cache_prices_v3', JSON.stringify(priceDatabase));
-                localStorage.setItem('kaizoku_cache_time_v3', Date.now().toString());
-            } catch (e) {
-                console.warn("Failed to save data to localStorage cache (quota exceeded?):", e);
-            }
-        }
-
-        async function fetchUpdatesInBackground() {
-            try {
-                const cachedTime = localStorage.getItem('kaizoku_cache_time_v3');
-                // Only check for updates once every 12 hours
-                if (cachedTime && (Date.now() - parseInt(cachedTime) < 12 * 60 * 60 * 1000)) {
-                    return; 
-                }
-                
-                console.log("Checking for card database updates in the background...");
-                const newPacks = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/packs.json", 3000);
-                const newDb = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/index/cards_by_id.json", 5000);
-                const newPrices = await fetchWithFallback(PRICES_MIRRORS, "data/prices/summary.json", 3000);
-                
-                if (newPacks && newDb) {
-                    masterCardDatabase = newDb;
-                    packsList = Object.values(newPacks);
-                    if (newPrices && newPrices.cards) {
-                        priceDatabase = newPrices.cards;
-                    }
-                    saveToCache();
-                    console.log("Background card database update completed.");
-                }
-            } catch (e) {
-                console.warn("Background update check failed (offline?):", e);
-            }
-        }
-
-        function clearCacheAndUpdate() {
-            if (confirm("คุณต้องการล้างแคชข้อมูลการ์ดในเครื่อง และดาวน์โหลดเวอร์ชันใหม่จากเซิร์ฟเวอร์ใช่ไหมครับ?")) {
-                try {
-                    localStorage.removeItem('kaizoku_cache_master_db_v3');
-                    localStorage.removeItem('kaizoku_cache_packs_v3');
-                    localStorage.removeItem('kaizoku_cache_prices_v3');
-                    localStorage.removeItem('kaizoku_cache_time_v3');
-                    alert("ล้างแคชในเครื่องสำเร็จแล้ว ระบบจะทำการโหลดใหม่เดี๋ยวนี้ครับ");
-                    window.location.reload();
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-
-        // Initialize application concurrently to prevent single slow fetches from blocking UI
-        window.addEventListener('DOMContentLoaded', async () => {
+        // Safe app initialization handler
+        async function initApp() {
             initSavedDecksDropdown();
             updateSearcherOdds();
             
-            // Try loading from cache for INSTANT 0.1s startup!
-            const cacheLoaded = tryLoadFromCache();
-            if (cacheLoaded) {
-                console.log("Cache loaded successfully. Instant start!");
-                initUI();
-                fetchUpdatesInBackground();
-            } else {
-                // First time load: show detailed loading progress
-                try {
-                    await fetchPriceDatabase();
-                    await fetchMasterCardDatabase();
-                    await fetchPacksList();
-                    
-                    saveToCache();
-                    initUI();
-                } catch (e) {
-                    console.error("Critical boot failure:", e);
-                    document.getElementById('cards-grid').innerHTML = `
-                        <div class="col-span-full py-16 text-center text-pirate-red">
-                            <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
-                            <p class="text-sm font-semibold">การเชื่อมต่ออินเทอร์เน็ตล้มเหลว</p>
-                            <p class="text-xs text-zinc-500 mt-2">ไม่สามารถดึงข้อมูลเริ่มต้นจากเซิร์ฟเวอร์ใดๆ ได้ (เซิร์ฟเวอร์อาจล่มหรือเครือข่ายอินเทอร์เน็ตของคุณขัดข้อง) กรุณาตรวจสอบสัญญาณอินเทอร์เน็ตและลองใหม่อีกครั้งครับ</p>
-                            <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-pirate-red hover:bg-pirate-redHover text-white text-xs font-bold rounded-lg transition-all shadow">🔄 โหลดใหม่อีกครั้ง</button>
-                        </div>`;
+            // Fire price database fetch in background (non-blocking!)
+            fetchPriceDatabase().then(() => {
+                if (typeof renderMyDeck === 'function') {
+                    try { renderMyDeck(); } catch(e){}
                 }
-            }
-        });
+            });
+            
+            // Only block on master card DB
+            await fetchMasterCardDatabase();
+            await fetchPacksList();
+        }
 
-        // 1.5 Fetch Master Card Database once at startup
+        // Timing safety check: DOMContentLoaded might have already fired on cached/fast iOS devices
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+
+                // 1.5 Fetch Master Card Database once at startup
         async function fetchMasterCardDatabase() {
-            masterCardDatabase = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/index/cards_by_id.json", 6000);
+            try {
+                masterCardDatabase = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/index/cards_by_id.json", 6000);
+            } catch (e) {
+                console.error("Critical: Failed to fetch master card index", e);
+            }
         }
 
         // 1. Fetch Price data
@@ -847,40 +769,46 @@
             }
         }
 
-        // 2. Fetch Set lists
+        // 2. Fetch Set lists and build dropdown selector
         async function fetchPacksList() {
-            const data = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/packs.json", 4000);
-            packsList = Object.values(data);
-        }
-
-        function initUI() {
-            // Filter sets list to keep only boosters, extra packs, starter decks, promos
-            const select = document.getElementById('set-select');
-            if (!select) return;
-            select.innerHTML = ''; // Clear loaded spinner
-            
-            // Sort packs list (newest first based on code or ID)
-            packsList.sort((a, b) => b.id.localeCompare(a.id));
-
-            // Prepend ALL option at the top as the new gorgeous default search mode
-            const allOption = document.createElement('option');
-            allOption.value = 'ALL';
-            allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
-            allOption.selected = true; // Default to searching everything!
-            select.appendChild(allOption);
-
-            packsList.forEach(pack => {
-                const option = document.createElement('option');
-                option.value = pack.id;
+            try {
+                const data = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/packs.json", 4000);
+                packsList = Object.values(data);
                 
-                // Parse name
-                const title = pack.raw_title || pack.title_parts.title;
-                option.textContent = title;
-                select.appendChild(option);
-            });
+                // Filter sets list to keep only boosters, extra packs, starter decks, promos
+                const select = document.getElementById('set-select');
+                select.innerHTML = ''; // Clear loaded spinner
+                
+                // Sort packs list (newest first based on code or ID)
+                packsList.sort((a, b) => b.id.localeCompare(a.id));
 
-            // Trigger first cards load
-            loadSetCards();
+                // Prepend ALL option at the top as the new gorgeous default search mode
+                const allOption = document.createElement('option');
+                allOption.value = 'ALL';
+                allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
+                allOption.selected = true; // Default to searching everything!
+                select.appendChild(allOption);
+
+                packsList.forEach(pack => {
+                    const option = document.createElement('option');
+                    option.value = pack.id;
+                    
+                    // Parse name
+                    const title = pack.raw_title || pack.title_parts.title;
+                    option.textContent = title;
+                    select.appendChild(option);
+                });
+
+                // Trigger first cards load
+                await loadSetCards();
+            } catch (e) {
+                document.getElementById('cards-grid').innerHTML = `
+                    <div class="col-span-full py-16 text-center text-pirate-red">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
+                        <p class="text-sm font-semibold">การเชื่อมโยงขัดข้อง (เซิร์ฟเวอร์หลักช้าหรือไม่มีอินเทอร์เน็ต)</p>
+                        <p class="text-xs text-zinc-500 mt-2">ระบบล้มเหลวในการเชื่อมต่อ CDN ทั้งหมด กรุณาลองตรวจสอบสัญญาณอินเทอร์เน็ตหรือรีเฟรชหน้าเว็บอีกครั้งครับ</p>
+                    </div>`;
+            }
         }
 
         // 3. Load Cards inside selected pack
