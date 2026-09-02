@@ -86,8 +86,38 @@
     <!-- Main Workspace -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
+        
         <!-- Left Column: My Deck Sheet (5/12) -->
         <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Saved Decks Management Card -->
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
+                <h2 class="text-sm font-bold text-white tracking-wide mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk text-pirate-red"></i> ระบบบันทึกหลายเด็ค (Saved Decks)
+                </h2>
+                <div class="space-y-3.5 text-xs">
+                    <div>
+                        <label class="block text-zinc-400 mb-1.5 font-semibold">เลือกเด็คที่บันทึกไว้:</label>
+                        <div class="flex gap-2">
+                            <select id="saved-decks-select" class="flex-grow bg-zinc-900 border border-pirate-border rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-pirate-red">
+                                <option value="">-- ไม่มีเด็คที่เลือก --</option>
+                            </select>
+                            <button onclick="loadSavedDeck()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-1.5 px-3 rounded border border-zinc-700 transition">โหลดเด็ค</button>
+                            <button onclick="deleteSavedDeck()" class="bg-red-950/40 hover:bg-red-900/40 text-pirate-red font-bold py-1.5 px-2 rounded border border-red-900/50 transition" title="ลบเด็คนี้"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-zinc-800/60">
+                        <label class="block text-zinc-400 mb-1.5 font-semibold">บันทึกเด็คปัจจุบันเป็นชื่อ:</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-deck-name" placeholder="เช่น Red Zoro OP-16, Nami Mill..." class="flex-grow bg-zinc-900 border border-pirate-border rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-pirate-red">
+                            <button onclick="saveCurrentDeck()" class="bg-pirate-red hover:bg-pirate-redHover text-white font-bold py-1.5 px-3 rounded transition flex items-center gap-1">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึกเด็ค
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
@@ -252,6 +282,70 @@
                         <button onclick="toggleCategoryFilter('Stage')" class="cat-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700" data-cat="Stage">Stage</button>
                     </div>
                 </div>
+
+                <!-- Cost, Power, Counter Advanced Filters -->
+                <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-pirate-border">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">💰 ค่าร่าย (Cost)</label>
+                        <div class="relative">
+                            <select id="cost-select" onchange="filterCards()" class="w-full bg-zinc-950 border border-pirate-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pirate-red appearance-none cursor-pointer font-sans">
+                                <option value="ALL">ทั้งหมด (All)</option>
+                                <option value="0">Cost 0</option>
+                                <option value="1">Cost 1</option>
+                                <option value="2">Cost 2</option>
+                                <option value="3">Cost 3</option>
+                                <option value="4">Cost 4</option>
+                                <option value="5">Cost 5</option>
+                                <option value="6">Cost 6</option>
+                                <option value="7">Cost 7</option>
+                                <option value="8">Cost 8</option>
+                                <option value="9">Cost 9</option>
+                                <option value="10">Cost 10+</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-zinc-500">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">⚡ พลัง (Power)</label>
+                        <div class="relative">
+                            <select id="power-select" onchange="filterCards()" class="w-full bg-zinc-950 border border-pirate-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pirate-red appearance-none cursor-pointer font-sans">
+                                <option value="ALL">ทั้งหมด (All)</option>
+                                <option value="0">Power 0</option>
+                                <option value="1000">1,000</option>
+                                <option value="2000">2,000</option>
+                                <option value="3000">3,000</option>
+                                <option value="4000">4,000</option>
+                                <option value="5000">5,000</option>
+                                <option value="6000">6,000</option>
+                                <option value="7000">7,000</option>
+                                <option value="8000">8,000</option>
+                                <option value="9000">9,000</option>
+                                <option value="10000">10,000</option>
+                                <option value="11000">11,000</option>
+                                <option value="12000">12,000+</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-zinc-500">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">🛡️ เคาน์เตอร์ (Counter)</label>
+                        <div class="relative">
+                            <select id="counter-select" onchange="filterCards()" class="w-full bg-zinc-950 border border-pirate-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pirate-red appearance-none cursor-pointer font-sans">
+                                <option value="ALL">ทั้งหมด (All)</option>
+                                <option value="none">ไม่มี (0)</option>
+                                <option value="1000">+1,000</option>
+                                <option value="2000">+2,000</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-zinc-500">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Card Grid Result View -->
@@ -283,6 +377,177 @@
 
     <!-- App Logic Execution Script Javascript -->
     <script>
+
+        // --- Helper for Advanced Searching (ignores spaces, punctuation, dots) ---
+        function normalizeSearchText(text) {
+            if (!text) return "";
+            return text.toString().toLowerCase()
+                       .replace(/[\s\.\-_'’\",]/g, '')
+                       .trim();
+        }
+
+        // --- System Saved Decks States ---
+        let savedDecks = {};
+
+        function initSavedDecksDropdown() {
+            const select = document.getElementById('saved-decks-select');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- ไม่มีเด็คที่เลือก --</option>';
+            
+            try {
+                const stored = localStorage.getItem('kaizoku_saved_decks');
+                if (stored) {
+                    savedDecks = JSON.parse(stored);
+                    Object.keys(savedDecks).forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to load saved decks", e);
+            }
+        }
+
+        function saveCurrentDeck() {
+            const nameInput = document.getElementById('new-deck-name');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert("กรุณาระบุชื่อเด็คที่ต้องการบันทึกด้วยนะครับ!");
+                return;
+            }
+            
+            savedDecks[name] = {
+                deck: JSON.parse(JSON.stringify(deck)),
+                leader: selectedLeader ? JSON.parse(JSON.stringify(selectedLeader)) : null
+            };
+            
+            try {
+                localStorage.setItem('kaizoku_saved_decks', JSON.stringify(savedDecks));
+                nameInput.value = '';
+                initSavedDecksDropdown();
+                document.getElementById('saved-decks-select').value = name;
+                alert(`บันทึกเด็ค "${name}" สำเร็จเรียบร้อยแล้วครับ! สามารถจัดเด็คถัดไปได้ทันที`);
+            } catch (e) {
+                alert("บันทึกล้มเหลว: หน่วยความจำ localStorage ของบราวเซอร์อาจเต็ม");
+            }
+        }
+
+        function loadSavedDeck() {
+            const name = document.getElementById('saved-decks-select').value;
+            if (!name) {
+                alert("กรุณาเลือกเด็คที่บันทึกไว้ในเมนูก่อนกดโหลดครับ!");
+                return;
+            }
+            
+            const loaded = savedDecks[name];
+            if (loaded) {
+                deck = loaded.deck || {};
+                if (loaded.leader) {
+                    setAsLeader(loaded.leader);
+                } else {
+                    removeLeader();
+                }
+                renderMyDeck();
+                filterCards();
+                alert(`โหลดเด็ค "${name}" เข้าสู่ชีตจัดเด็คสำเร็จแล้วครับ!`);
+            }
+        }
+
+        function deleteSavedDeck() {
+            const name = document.getElementById('saved-decks-select').value;
+            if (!name) {
+                alert("กรุณาเลือกเด็คที่ต้องการลบในช่องรายการก่อนครับ!");
+                return;
+            }
+            
+            if (confirm(`คุณต้องการลบเด็คที่บันทึกไว้ชื่อ "${name}" หรือไม่?`)) {
+                delete savedDecks[name];
+                try {
+                    localStorage.setItem('kaizoku_saved_decks', JSON.stringify(savedDecks));
+                    initSavedDecksDropdown();
+                    alert(`ลบเด็ค "${name}" สำเร็จเรียบร้อยแล้วครับ`);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        // --- Card Details Modal logic ---
+        function openCardModal(cardId) {
+            const card = masterCardDatabase[cardId];
+            if (!card) return;
+            
+            document.getElementById('modal-card-name').textContent = card.name || cardId;
+            document.getElementById('modal-card-id-category').textContent = `${cardId} | ${card.category} | ${card.rarity || 'Common'}`;
+            
+            const baseImgUrl = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${cardId}.png`;
+            document.getElementById('modal-card-img').src = `https://images.weserv.nl/?url=${encodeURIComponent(baseImgUrl)}`;
+            
+            document.getElementById('modal-card-cost').textContent = card.cost !== null && card.cost !== undefined ? card.cost : '-';
+            document.getElementById('modal-card-power').textContent = card.power !== null && card.power !== undefined ? card.power.toLocaleString() : '-';
+            document.getElementById('modal-card-counter').textContent = card.counter !== null && card.counter !== undefined ? `+${card.counter.toLocaleString()}` : 'ไม่มี (0)';
+            document.getElementById('modal-card-colors').textContent = card.colors ? card.colors.join(' / ') : '-';
+            document.getElementById('modal-card-types').textContent = card.types ? card.types.join(', ') : '-';
+            
+            const effectDiv = document.getElementById('modal-card-effect');
+            if (card.effect && card.effect.trim() !== "-") {
+                effectDiv.textContent = card.effect;
+            } else {
+                effectDiv.innerHTML = '<span class="text-zinc-500 italic">ไม่มีความสามารถพิเศษ (Vanilla Character / Stage)</span>';
+            }
+            
+            const actionsContainer = document.getElementById('modal-actions');
+            actionsContainer.innerHTML = '';
+            
+            if (card.category === 'Leader') {
+                const btn = document.createElement('button');
+                btn.className = "flex-grow py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow";
+                btn.innerHTML = '<i class="fa-solid fa-crown text-yellow-200"></i> กำหนดเป็นหัวหน้า (Set as Leader)';
+                btn.onclick = () => {
+                    setAsLeader(card);
+                    closeModal();
+                };
+                actionsContainer.appendChild(btn);
+            } else {
+                const count = deck[cardId] || 0;
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = `flex-grow py-3 ${count >= 4 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-[#ff4b4b] hover:bg-[#e03e3e] text-white'} font-bold rounded-lg text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow`;
+                addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> เพิ่มลงเด็ค (${count} / 4)`;
+                addBtn.onclick = () => {
+                    if (count >= 4) {
+                        alert("ใส่การ์ดซ้ำได้สูงสุดแค่ 4 ใบต่อหนึ่งเด็คเท่านั้นครับ!");
+                        return;
+                    }
+                    addToDeck(card);
+                    openCardModal(cardId); // refresh count UI
+                };
+                actionsContainer.appendChild(addBtn);
+                
+                if (count > 0) {
+                    const subBtn = document.createElement('button');
+                    subBtn.className = "py-3 px-5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-lg text-sm transition-all active:scale-95 flex items-center justify-center border border-zinc-700";
+                    subBtn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+                    subBtn.onclick = () => {
+                        decrementDeckCard(cardId);
+                        openCardModal(cardId); // refresh count UI
+                    };
+                    actionsContainer.appendChild(subBtn);
+                }
+            }
+            
+            document.getElementById('card-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // lock scroll
+        }
+
+        function closeModal(event) {
+            document.getElementById('card-modal').classList.add('hidden');
+            document.body.style.overflow = ''; // restore scroll
+        }
+
         // --- System Data States ---
         let packsList = [];
         let cardDatabase = [];
@@ -304,6 +569,7 @@
             await fetchPriceDatabase();
             await fetchMasterCardDatabase();
             await fetchPacksList();
+            initSavedDecksDropdown();
             updateSearcherOdds();
         });
 
@@ -347,6 +613,13 @@
                     // Sort packs list (newest first based on code or ID)
                     packsList.sort((a, b) => b.id.localeCompare(a.id));
 
+                    // Prepend ALL option at the top as the new gorgeous default search mode
+                    const allOption = document.createElement('option');
+                    allOption.value = 'ALL';
+                    allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
+                    allOption.selected = true; // Default to searching everything!
+                    select.appendChild(allOption);
+
                     packsList.forEach(pack => {
                         const option = document.createElement('option');
                         option.value = pack.id;
@@ -354,11 +627,6 @@
                         // Parse name
                         const title = pack.raw_title || pack.title_parts.title;
                         option.textContent = title;
-                        
-                        // Auto-select OP-16 or OP-17 if available as default
-                        if (title.includes("OP-16") || title.includes("OP16")) {
-                            option.selected = true;
-                        }
                         select.appendChild(option);
                     });
 
@@ -397,22 +665,26 @@
                     throw new Error("Master card database is empty");
                 }
                 
-                // Filter local masterCardDatabase by matching pack_id
-                cardDatabase = Object.values(masterCardDatabase).filter(card => card.pack_id === packId);
-                
-                if (cardDatabase.length === 0) {
-                    // Fallback filtering by prefix matching of the set if pack_id didn't match (for safety)
-                    const selectedPack = packsList.find(p => p.id === packId);
-                    if (selectedPack) {
-                        const title = selectedPack.raw_title || selectedPack.title_parts.title || "";
-                        // Extract OP-XX or EB-XX or ST-XX
-                        const codeMatch = title.match(/(OP-\d+|EB-\d+|ST-\d+)/i);
-                        if (codeMatch) {
-                            const code = codeMatch[1].replace("-", "").toUpperCase(); // e.g. "OP16"
-                            cardDatabase = Object.values(masterCardDatabase).filter(card => {
-                                const cid = card.card_id || card.id || "";
-                                return cid.replace("-", "").toUpperCase().startsWith(code);
-                            });
+                if (packId === "ALL") {
+                    cardDatabase = Object.values(masterCardDatabase);
+                } else {
+                    // Filter local masterCardDatabase by matching pack_id
+                    cardDatabase = Object.values(masterCardDatabase).filter(card => card.pack_id === packId);
+                    
+                    if (cardDatabase.length === 0) {
+                        // Fallback filtering by prefix matching of the set if pack_id didn't match (for safety)
+                        const selectedPack = packsList.find(p => p.id === packId);
+                        if (selectedPack) {
+                            const title = selectedPack.raw_title || selectedPack.title_parts.title || "";
+                            // Extract OP-XX or EB-XX or ST-XX
+                            const codeMatch = title.match(/(OP-\d+|EB-\d+|ST-\d+)/i);
+                            if (codeMatch) {
+                                const code = codeMatch[1].replace("-", "").toUpperCase(); // e.g. "OP16"
+                                cardDatabase = Object.values(masterCardDatabase).filter(card => {
+                                    const cid = card.card_id || card.id || "";
+                                    return cid.replace("-", "").toUpperCase().startsWith(code);
+                                });
+                            }
                         }
                     }
                 }
@@ -437,25 +709,67 @@
         // 4. Client-side Search and Filtering logic
         function filterCards() {
             const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            const costQuery = document.getElementById('cost-select').value;
+            const powerQuery = document.getElementById('power-select').value;
+            const counterQuery = document.getElementById('counter-select').value;
             const grid = document.getElementById('cards-grid');
             
             const filtered = cardDatabase.filter(card => {
-                // Search term match
-                const nameMatch = card.name ? card.name.toLowerCase().includes(searchQuery) : false;
-                const idMatch = card.id ? card.id.toLowerCase().includes(searchQuery) : false;
-                const effectMatch = card.effect ? card.effect.toLowerCase().includes(searchQuery) : false;
-                const typeMatch = card.types ? card.types.some(t => t.toLowerCase().includes(searchQuery)) : false;
-                const textMatch = !searchQuery || nameMatch || idMatch || effectMatch || typeMatch;
+                const cid = card.id || card.card_id || "";
+                
+                // 1. Loose advanced search term match (ignores dots, spaces, hyphens, etc.)
+                const queryNorm = normalizeSearchText(searchQuery);
+                const nameMatch = card.name ? normalizeSearchText(card.name).includes(queryNorm) : false;
+                const idMatch = cid ? normalizeSearchText(cid).includes(queryNorm) : false;
+                const effectMatch = card.effect ? normalizeSearchText(card.effect).includes(queryNorm) : false;
+                const typeMatch = card.types ? card.types.some(t => normalizeSearchText(t).includes(queryNorm)) : false;
+                const keywordMatch = card.keywords ? card.keywords.some(k => normalizeSearchText(k).includes(queryNorm)) : false;
+                const textMatch = !searchQuery || nameMatch || idMatch || effectMatch || typeMatch || keywordMatch;
 
-                // Color filter match
+                // 2. Color filter match
                 const colorMatch = activeColorsFilter.length === 0 || 
                     (card.colors && card.colors.some(c => activeColorsFilter.includes(c)));
 
-                // Category filter match
+                // 3. Category filter match
                 const categoryMatch = activeCategoriesFilter.length === 0 || 
                     activeCategoriesFilter.includes(card.category);
 
-                return textMatch && colorMatch && categoryMatch;
+                // 4. Cost filter match
+                let costMatch = true;
+                if (costQuery !== "ALL") {
+                    const cardCost = card.cost !== undefined && card.cost !== null ? parseInt(card.cost) : null;
+                    const filterCost = parseInt(costQuery);
+                    if (filterCost === 10) {
+                        costMatch = cardCost !== null && cardCost >= 10;
+                    } else {
+                        costMatch = cardCost === filterCost;
+                    }
+                }
+
+                // 5. Power filter match
+                let powerMatch = true;
+                if (powerQuery !== "ALL") {
+                    const cardPower = card.power !== undefined && card.power !== null ? parseInt(card.power) : null;
+                    const filterPower = parseInt(powerQuery);
+                    if (filterPower === 12000) {
+                        powerMatch = cardPower !== null && cardPower >= 12000;
+                    } else {
+                        powerMatch = cardPower === filterPower;
+                    }
+                }
+
+                // 6. Counter filter match
+                let counterMatch = true;
+                if (counterQuery !== "ALL") {
+                    const cardCounter = card.counter !== undefined && card.counter !== null ? parseInt(card.counter) : null;
+                    if (counterQuery === "none") {
+                        counterMatch = cardCounter === null || cardCounter === 0;
+                    } else {
+                        counterMatch = cardCounter === parseInt(counterQuery);
+                    }
+                }
+
+                return textMatch && colorMatch && categoryMatch && costMatch && powerMatch && counterMatch;
             });
 
             document.getElementById('card-results-counter').textContent = `ผลลัพธ์: พบการ์ด ${filtered.length} ใบ`;
@@ -495,10 +809,17 @@
                 
                 cardDiv.innerHTML = `
                     <div>
-                        <div class="relative overflow-hidden rounded-lg aspect-[3/4.2] mb-2 bg-zinc-950">
+
+                        <div class="relative overflow-hidden rounded-lg aspect-[3/4.2] mb-2 bg-zinc-950 cursor-pointer group" onclick="openCardModal('${cardId}')">
                             <!-- Bypassing image hotlinking via metadata no-referrer directly inside client browser -->
-                            <img src="${imgUrl}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full h-full object-contain" loading="lazy">
+                            <img src="${imgUrl}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <span class="bg-zinc-900/90 text-white text-[11px] font-bold px-3 py-1.5 rounded-full border border-pirate-border shadow flex items-center gap-1.5">
+                                    <i class="fa-solid fa-magnifying-glass-plus text-pirate-red"></i> ดูภาพใหญ่ / คำแปล
+                                </span>
+                            </div>
                         </div>
+
                         <h4 class="text-xs font-bold text-white truncate px-1">${card.name}</h4>
                         <div class="text-[10px] text-zinc-400 mt-0.5 font-mono">${cardId} | ${card.category}</div>
                         <div class="text-[11px] text-pirate-accent font-semibold mt-1 font-mono">${priceDisplay}</div>
@@ -562,6 +883,8 @@
             
             const baseLeadImg = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id || card.card_id}.png`;
             document.getElementById('leader-img').src = `https://images.weserv.nl/?url=${encodeURIComponent(baseLeadImg)}`;
+            document.getElementById('leader-img').onclick = () => openCardModal(card.id || card.card_id);
+            document.getElementById('leader-img').classList.add('cursor-pointer', 'hover:scale-105', 'transition-transform');
             document.getElementById('leader-name').textContent = card.name;
             document.getElementById('leader-id').textContent = card.id || card.card_id;
             
@@ -860,5 +1183,63 @@
             area.value = lines.join('\n');
         }
     </script>
+
+    <!-- Modal for Card Detail & Large Image View -->
+    <div id="card-modal" class="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[100] hidden" onclick="closeModal(event)">
+        <div class="bg-[#16161a] border border-pirate-border rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col md:flex-row gap-6 p-6" onclick="event.stopPropagation()">
+            <!-- Left: Card Large Image -->
+            <div class="flex-shrink-0 md:w-1/2 flex items-center justify-center bg-black/35 rounded-xl p-2.5 border border-pirate-border">
+                <img id="modal-card-img" src="" referrerpolicy="no-referrer" class="max-h-[60vh] object-contain rounded-lg bg-neutral-950" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
+            </div>
+            <!-- Right: Card Metadata & Effect Translations -->
+            <div class="flex-grow flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 id="modal-card-name" class="text-lg font-bold text-white"></h3>
+                        <button onclick="closeModal(event)" class="text-zinc-500 hover:text-white transition-colors p-1 text-sm bg-zinc-800 rounded-lg"><i class="fa-solid fa-xmark"></i> Close</button>
+                    </div>
+                    <p id="modal-card-id-category" class="text-xs font-mono text-pirate-accent mb-4"></p>
+                    
+                    <!-- Advanced stats grid -->
+                    <div class="grid grid-cols-2 gap-3.5 text-xs mb-4">
+                        <div class="bg-zinc-900 p-2.5 rounded-lg border border-zinc-800/80">
+                            <span class="text-zinc-500 block mb-0.5">💰 ค่าร่าย (Cost) / Life</span>
+                            <span id="modal-card-cost" class="font-bold text-white font-mono text-sm"></span>
+                        </div>
+                        <div class="bg-zinc-900 p-2.5 rounded-lg border border-zinc-800/80">
+                            <span class="text-zinc-500 block mb-0.5">⚡ พลัง (Power)</span>
+                            <span id="modal-card-power" class="font-bold text-white font-mono text-sm"></span>
+                        </div>
+                        <div class="bg-zinc-900 p-2.5 rounded-lg border border-zinc-800/80">
+                            <span class="text-zinc-500 block mb-0.5">🛡️ เคาน์เตอร์ (Counter)</span>
+                            <span id="modal-card-counter" class="font-bold text-white font-mono text-sm"></span>
+                        </div>
+                        <div class="bg-zinc-900 p-2.5 rounded-lg border border-zinc-800/80">
+                            <span class="text-zinc-500 block mb-0.5">🎨 สีการ์ด (Colors)</span>
+                            <span id="modal-card-colors" class="font-bold text-white"></span>
+                        </div>
+                    </div>
+
+                    <!-- Traits -->
+                    <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800/80 text-xs mb-4">
+                        <span class="text-zinc-500 block mb-1">🏷️ เผ่า / คุณลักษณะ (Traits)</span>
+                        <span id="modal-card-types" class="font-bold text-white"></span>
+                    </div>
+
+                    <!-- Translation effect text block -->
+                    <div class="bg-zinc-900 p-4 rounded-lg border border-zinc-800/80 text-xs mb-4">
+                        <span class="text-zinc-500 text-xs block mb-1.5 font-bold uppercase tracking-wide text-pirate-red">📖 คำแปลเอฟเฟกต์ (English Card Effect)</span>
+                        <div id="modal-card-effect" class="text-zinc-300 font-sans leading-relaxed text-[13px] bg-black/40 p-2.5 rounded border border-zinc-800"></div>
+                    </div>
+                </div>
+                
+                <!-- Action Footer inside Modal -->
+                <div id="modal-actions" class="flex gap-3 mt-4 pt-3 border-t border-pirate-border">
+                    <!-- Buttons will be dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
