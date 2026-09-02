@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Kaizoku - One Piece TCG Deck Builder</title>
+    <title>Deck Builder Project - One Piece TCG Deck Builder</title>
     <!-- ป้องกันการส่ง Referrer เพื่อแก้ปัญหาโดนบล็อกรูปภาพการ์ดจากเซิร์ฟเวอร์หลักของ Bandai -->
     <meta name="referrer" content="no-referrer">
     <!-- Tailwind CSS CDN -->
@@ -68,7 +68,7 @@
                     <i class="fa-solid fa-skull-crossbones"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wider text-white">CARD KAIZOKU</h1>
+                    <h1 class="text-xl font-bold tracking-wider text-white">DECK BUILDER PROJECT</h1>
                     <p class="text-xs text-zinc-400">One Piece TCG Static Deck Builder & Analytics</p>
                 </div>
             </div>
@@ -371,7 +371,7 @@
 
     <!-- Footer Area Info -->
     <footer class="bg-pirate-panel border-t border-pirate-border py-4 text-center text-xs text-zinc-500 mt-auto">
-        <p>© 2026 Card Kaizoku Static Builder. Powered by buhbbl/punk-records Global database.</p>
+        <p>© 2026 Deck Builder Project. Powered by buhbbl/punk-records Global database.</p>
         <p class="text-[10px] text-zinc-600 mt-1 max-w-xl mx-auto px-4">All Card Game assets, images, and brand data are copyrighted by © Eiichiro Oda / Shueisha, Toei Animation, and Bandai Namco Entertainment Inc. This is a static, fan-made application.</p>
     </footer>
 
@@ -522,6 +522,17 @@
                         // เก็บแคชข้อมูลไว้
                         card.effect = fullData.effect || "-";
                         card.trigger = fullData.trigger || null;
+                        card.power = fullData.power !== undefined ? fullData.power : card.power;
+                        card.cost = fullData.cost !== undefined ? fullData.cost : card.cost;
+                        card.counter = fullData.counter !== undefined ? fullData.counter : card.counter;
+                        card.types = fullData.types !== undefined ? fullData.types : card.types;
+                        
+                        // อัปเดตข้อมูลบนป๊อปอัปให้เป็นแบบสมบูรณ์
+                        document.getElementById('modal-card-cost').textContent = card.cost !== null && card.cost !== undefined ? card.cost : '-';
+                        document.getElementById('modal-card-power').textContent = card.power !== null && card.power !== undefined ? card.power.toLocaleString() : '-';
+                        document.getElementById('modal-card-counter').textContent = card.counter !== null && card.counter !== undefined ? `+${card.counter.toLocaleString()}` : 'ไม่มี (0)';
+                        document.getElementById('modal-card-types').textContent = card.types ? card.types.join(', ') : '-';
+                        
                         displayCardEffect(card);
                     })
                     .catch(err => {
@@ -615,61 +626,70 @@
             }, 300);
         }
 
-        async function enrichCardDetails(cards) {
-            const select = document.getElementById('set-select');
-            const packId = select.value;
+        let backgroundQueueRunning = false;
+        async function startBackgroundEnrichment() {
+            if (backgroundQueueRunning) return;
+            backgroundQueueRunning = true;
             
-            // Gather unique card list needing enrichment
-            const toFetch = cards.filter(card => {
-                const cardId = card.id || card.card_id;
-                return card.pack_id && cardId && (!masterCardDatabase[cardId].effect || masterCardDatabase[cardId].effect === "-");
-            });
-            
-            if (toFetch.length === 0) return;
-            
-            // Show background enrichment spinner
-            const resultsCounter = document.getElementById('card-results-counter');
-            const originalText = resultsCounter.innerHTML;
-            if (!originalText.includes("กำลังโหลดข้อมูล")) {
-                resultsCounter.innerHTML = `${originalText} <span class="text-[10px] text-pirate-accent ml-2 animate-pulse"><i class="fa-solid fa-cloud-arrow-down"></i> กำลังโหลดข้อมูลเอฟเฟกต์การ์ดเพิ่มเติม...</span>`;
+            if (!packsList || packsList.length === 0) {
+                backgroundQueueRunning = false;
+                return;
             }
             
-            const batchSize = 10; // Light batch size for iPad Safari stability
-            for (let i = 0; i < toFetch.length; i += batchSize) {
-                // Stop loading if the user has navigated away or typed another filter
-                if (select.value !== packId) break;
+            // Create a copy of the pack list to iterate sequentially
+            const packsToLoad = [...packsList];
+            const resultsCounter = document.getElementById('card-results-counter');
+            
+            for (let i = 0; i < packsToLoad.length; i++) {
+                const pack = packsToLoad[i];
+                // Show gentle loading state in results counter
+                if (resultsCounter && document.getElementById('set-select').value === "ALL") {
+                    resultsCounter.innerHTML = `ผลลัพธ์: พบการ์ด ${cardDatabase.length} ใบ <span class="text-[10px] text-pirate-accent ml-2 animate-pulse"><i class="fa-solid fa-cloud-arrow-down"></i> กำลังเตรียมข้อมูลเอฟเฟกต์ชุด ${pack.id} (${i+1}/${packsToLoad.length})...</span>`;
+                }
                 
-                const batch = toFetch.slice(i, i + batchSize);
-                await Promise.all(batch.map(async (card) => {
-                    const cardId = card.id || card.card_id;
-                    try {
-                        const url = `https://images.weserv.nl/?url=` + encodeURIComponent(`${activePunkRecordsMirror}english-asia/cards/${card.pack_id}/${cardId}.json`);
-                        const res = await fetch(url);
-                        if (res.ok) {
-                            const details = await res.json();
-                            if (details && details.effect) {
-                                masterCardDatabase[cardId].effect = details.effect;
-                                masterCardDatabase[cardId].trigger = details.trigger || details.trigger_text || null;
+                try {
+                    const data = await fetchWithFallback(PUNK_RECORDS_MIRRORS, `english-asia/cards/${pack.id}.json`, 4000);
+                    if (data && Array.isArray(data)) {
+                        data.forEach(card => {
+                            const cardId = card.id || card.card_id;
+                            if (masterCardDatabase[cardId]) {
+                                masterCardDatabase[cardId] = {
+                                    ...masterCardDatabase[cardId],
+                                    ...card,
+                                    id: cardId // Ensure ID field consistency
+                                };
+                            }
+                        });
+                        
+                        // Silent update the UI if they are currently looking at ALL sets
+                        const currentSelect = document.getElementById('set-select').value;
+                        if (currentSelect === "ALL") {
+                            cardDatabase = Object.values(masterCardDatabase);
+                            // Only trigger rendering if they have typed something, to keep input fast and responsive
+                            const searchInputVal = document.getElementById('search-input').value.trim();
+                            if (searchInputVal.length > 2 || 
+                                document.getElementById('cost-select').value !== "ALL" || 
+                                document.getElementById('power-select').value !== "ALL" || 
+                                document.getElementById('counter-select').value !== "ALL") {
+                                filterCards(true); // silent / non-intrusive filter
                             }
                         }
-                    } catch (e) {
-                        console.warn(`Failed to enrich card ${cardId}`, e);
                     }
-                }));
-                
-                // Real-time update the current search grid with newly fetched details
-                const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
-                if (searchQuery.includes("add") || searchQuery.includes("up") || searchQuery.includes("to") || searchQuery.includes(" ") || searchQuery.length > 3) {
-                    filterCards(true); // silent filter
+                } catch (e) {
+                    console.warn(`Background fetch failed for pack ${pack.id}`, e);
                 }
+                
+                // Pause for 800ms between packs for an extremely light network profile
+                await new Promise(resolve => setTimeout(resolve, 800));
             }
             
-            // Final silent filter to clean UI
-            filterCards(true);
+            // Completed! Reset indicator text
+            if (resultsCounter && document.getElementById('set-select').value === "ALL") {
+                resultsCounter.textContent = `ผลลัพธ์: พบการ์ด ${cardDatabase.length} ใบ (โหลดแคชสมบูรณ์แล้ว)`;
+            }
+            backgroundQueueRunning = false;
         }
 
-
-        
         // List of alternative mirrors for punk-records
         const PUNK_RECORDS_MIRRORS = [
             "https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/",
@@ -801,6 +821,9 @@
 
                 // Trigger first cards load
                 await loadSetCards();
+                
+                // Start background loading of all packs sequentially (non-blocking)
+                startBackgroundEnrichment();
             } catch (e) {
                 document.getElementById('cards-grid').innerHTML = `
                     <div class="col-span-full py-16 text-center text-pirate-red">
@@ -871,9 +894,6 @@
                 });
                 
                 filterCards();
-                if (packId !== "ALL") {
-                    enrichCardDetails(cardDatabase);
-                }
             } catch (e) {
                 console.error(e);
                 grid.innerHTML = `
@@ -972,18 +992,6 @@
 
             cards.forEach(card => {
                 const cardId = card.id || card.card_id;
-                
-                // ตรวจสอบและดึงข้อมูลภาษาอังกฤษเพิ่มเติมในเบื้องหลังแบบเงียบๆ เพื่อความรวดเร็วและใช้ในการสืบค้นเอฟเฟกต์แบบละเอียด
-                if (card.effect === undefined) {
-                    const packId = card.pack_id;
-                    fetch(`${activePunkRecordsMirror}english-asia/cards/${packId}/${cardId}.json`)
-                        .then(res => res.json())
-                        .then(fullData => {
-                            card.effect = fullData.effect || "-";
-                            card.trigger = fullData.trigger || null;
-                        })
-                        .catch(() => { card.effect = "-"; });
-                }
                 const countInDeck = deck[cardId] || 0;
                 
                 // Get image url
