@@ -482,7 +482,9 @@
                 const countInDeck = deck[cardId] || 0;
                 
                 // Get image url
-                const imgUrl = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${cardId}.png`;
+                const baseImgUrl = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${cardId}.png`;
+                // ใช้ Weserv Image Proxy เพื่อให้ iPad/Safari สามารถโหลดรูปภาพข้ามโดเมนได้ 100% บายพาสระบบบล็อกของ Bandai
+                const imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(baseImgUrl)}`;
                 
                 // Get price
                 const priceData = priceDatabase[cardId];
@@ -558,7 +560,8 @@
             const leaderActive = document.getElementById('leader-active');
             leaderActive.classList.remove('hidden');
             
-            document.getElementById('leader-img').src = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id || card.card_id}.png`;
+            const baseLeadImg = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id || card.card_id}.png`;
+            document.getElementById('leader-img').src = `https://images.weserv.nl/?url=${encodeURIComponent(baseLeadImg)}`;
             document.getElementById('leader-name').textContent = card.name;
             document.getElementById('leader-id').textContent = card.id || card.card_id;
             
