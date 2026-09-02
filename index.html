@@ -3,725 +3,817 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer">
     <title>Card Kaizoku - One Piece TCG Deck Builder</title>
+    <!-- ป้องกันการส่ง Referrer เพื่อแก้ปัญหาโดนบล็อกรูปภาพการ์ดจากเซิร์ฟเวอร์หลักของ Bandai -->
+    <meta name="referrer" content="no-referrer">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome สำหรับไอคอน -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pirate: {
+                            dark: '#0f0f11',
+                            panel: '#16161a',
+                            border: '#2a2a35',
+                            red: '#ff4b4b',
+                            redHover: '#e03e3e',
+                            accent: '#ffd700'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a1a1a; }
-        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
+        body {
+            background-color: #0f0f11;
+            color: #e4e4e7;
+            font-family: 'Kanit', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #16161a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a35;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff4b4b;
+        }
         .card-glow:hover {
-            box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
-            transform: translateY(-4px);
+            box-shadow: 0 0 15px rgba(255, 75, 75, 0.4);
+            border-color: #ff4b4b;
         }
     </style>
+    <!-- Google Fonts for gorgeous Thai rendering on iPad, iPhone and PC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#121212] text-gray-100 min-h-screen font-sans antialiased selection:bg-red-600 selection:text-white">
+<body class="min-h-screen flex flex-col">
 
     <!-- Header Navigation -->
-    <header class="bg-[#1a1a1a] border-b border-gray-800 py-4 px-6 sticky top-0 z-50 shadow-md">
+    <header class="bg-pirate-panel border-b border-pirate-border px-6 py-4 sticky top-0 z-50 shadow-lg">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <span class="text-3xl animate-bounce">ð´ââ ï¸</span>
+                <div class="bg-pirate-red text-white p-2.5 rounded-lg text-xl shadow-md shadow-red-900/30">
+                    <i class="fa-solid fa-skull-crossbones"></i>
+                </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-wider text-red-600 font-mono">CARD KAIZOKU</h1>
-                    <p class="text-xs text-gray-400">One Piece TCG Ultimate Deck Builder & Card Database</p>
+                    <h1 class="text-xl font-bold tracking-wider text-white">CARD KAIZOKU</h1>
+                    <p class="text-xs text-zinc-400">One Piece TCG Static Deck Builder & Analytics</p>
                 </div>
             </div>
-            
-            <!-- Quick Info/Status -->
             <div class="flex items-center gap-4">
-                <span id="network-status" class="flex items-center gap-2 text-xs bg-green-950/80 text-green-400 border border-green-800 px-3 py-1.5 rounded-full font-mono">
-                    <span class="w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
-                    Live Data: Connected
+                <span class="text-xs bg-zinc-800 text-pirate-accent border border-zinc-700 px-3 py-1.5 rounded-full font-mono">
+                    <i class="fa-solid fa-cloud-bolt mr-1"></i> Static Hosted (GitHub Pages Ready)
                 </span>
+                <a href="https://github.com" target="_blank" class="text-zinc-400 hover:text-white transition text-sm flex items-center gap-2">
+                    <i class="fa-brands fa-github text-xl"></i> GitHub
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Left Side: Deck Editor (5 Cols) -->
-        <section class="lg:col-span-5 space-y-6">
-            <div class="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 sticky top-24 shadow-2xl space-y-6">
-                
-                <!-- Deck Header -->
-                <div class="flex justify-between items-center pb-4 border-b border-gray-800">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl text-red-500">ðï¸</span>
-                        <h2 class="text-lg font-bold text-gray-100">à¹à¸à¹à¸à¸à¸­à¸à¸à¸±à¸ (My Deck)</h2>
-                    </div>
-                    <button id="clear-deck-btn" class="text-xs bg-red-950 hover:bg-red-900 text-red-400 hover:text-red-200 border border-red-800 px-3 py-1.5 rounded-lg transition duration-200">
-                        à¸¥à¹à¸²à¸à¹à¸à¹à¸à¸à¸±à¹à¸à¸«à¸¡à¸ ð§¹
+        <!-- Left Column: My Deck Sheet (5/12) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        <i class="fa-solid fa-anchor text-pirate-red"></i> DECK ของฉัน
+                    </h2>
+                    <button onclick="resetDeck()" class="text-xs text-zinc-400 hover:text-pirate-red transition flex items-center gap-1.5 bg-zinc-800/50 hover:bg-zinc-800 px-2.5 py-1.5 rounded-lg">
+                        <i class="fa-solid fa-trash-can"></i> ล้างเด็คทั้งหมด
                     </button>
                 </div>
 
-                <!-- Leader Container -->
-                <div class="bg-[#222] rounded-xl p-4 border border-gray-800 shadow-inner flex flex-col items-center min-h-[140px] justify-center transition duration-200">
-                    <p class="text-[10px] font-bold text-red-500 tracking-widest uppercase mb-3">ð ACTIVE LEADER</p>
-                    <div id="leader-display" class="w-full text-center flex flex-col items-center">
-                        <div class="text-sm text-gray-500 italic">à¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹</div>
-                        <p class="text-xs text-gray-600 mt-1">à¸à¸à¸à¸¸à¹à¸¡ "à¹à¸¥à¸·à¸­à¸à¹à¸à¹à¸ Leader" à¸à¸µà¹à¸à¸²à¸£à¹à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹à¸à¹à¸²à¸à¸à¸§à¸²</p>
+                <!-- Leader Selection Slot -->
+                <div class="bg-zinc-900/50 border border-dashed border-zinc-700 rounded-xl p-4 mb-5">
+                    <span class="text-xs text-zinc-400 font-semibold uppercase tracking-wider block mb-3">👑 การ์ดหัวหน้า (Leader)</span>
+                    <div id="leader-empty" class="text-center py-4">
+                        <i class="fa-solid fa-crown text-zinc-600 text-3xl mb-2"></i>
+                        <p class="text-xs text-zinc-500">ยังไม่ได้เลือกลีดเดอร์<br>กด "เลือกเป็น Leader" บนการ์ดที่ต้องการจัดเด็ค</p>
                     </div>
-                </div>
-
-                <!-- Deck Stats & Progress -->
-                <div class="bg-[#222] rounded-xl p-4 border border-gray-800 space-y-3">
-                    <div class="flex justify-between text-sm items-center">
-                        <span class="text-gray-400 font-medium">à¸à¸³à¸à¸§à¸à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸«à¸¥à¸±à¸:</span>
-                        <span class="text-base font-bold text-white"><span id="deck-qty" class="text-red-500 text-lg">0</span> / 50 à¹à¸</span>
-                    </div>
-                    <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                        <div id="deck-progress" class="bg-gradient-to-r from-red-600 to-red-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                    <div id="validation-box" class="text-xs p-3 rounded-lg bg-yellow-950/30 border border-yellow-900/50 text-yellow-400 flex items-start gap-2">
-                        <span>â¹ï¸</span>
-                        <span>à¸à¸£à¸¸à¸à¸²à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹ à¹à¸à¸·à¹à¸­à¸à¸£à¸§à¸à¸ªà¸­à¸à¸à¸§à¸²à¸¡à¸ªà¸­à¸à¸à¸¥à¹à¸­à¸à¸à¸­à¸à¸ªà¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸</span>
-                    </div>
-                </div>
-
-                <!-- Cost Curve -->
-                <div id="cost-curve-section" class="space-y-2 hidden">
-                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">ð à¸ªà¸±à¸à¸ªà¹à¸§à¸à¸à¹à¸²à¸£à¹à¸²à¸¢ (Cost Curve)</h3>
-                    <div class="bg-[#222] rounded-xl p-4 border border-gray-800">
-                        <div id="curve-chart-container" class="flex items-end justify-between h-24 pt-2">
-                            <!-- Bars will render dynamically -->
+                    <div id="leader-active" class="hidden flex gap-4 items-center">
+                        <img id="leader-img" src="" alt="Leader" class="w-20 rounded-lg shadow-md border border-pirate-border">
+                        <div class="flex-grow min-w-0">
+                            <h3 id="leader-name" class="font-bold text-white text-sm truncate"></h3>
+                            <p id="leader-id" class="text-xs font-mono text-pirate-accent mt-0.5"></p>
+                            <div class="flex gap-1.5 mt-2" id="leader-colors"></div>
                         </div>
-                        <div class="flex justify-between text-[10px] text-gray-500 mt-1 border-t border-gray-800 pt-1">
-                            <span>Cost: 0</span>
-                            <span>1</span>
-                            <span>2</span>
-                            <span>3</span>
-                            <span>4</span>
-                            <span>5</span>
-                            <span>6</span>
-                            <span>7</span>
-                            <span>8</span>
-                            <span>9</span>
-                            <span>10+</span>
-                        </div>
+                        <button onclick="removeLeader()" class="bg-zinc-800 hover:bg-pirate-red/20 text-zinc-400 hover:text-pirate-red p-2 rounded-lg transition" title="ลบ Leader">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Deck List Cards -->
-                <div class="space-y-2">
-                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">ð´ à¸£à¸²à¸¢à¸à¸·à¹à¸­à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸</h3>
-                    <div id="deck-items-list" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                        <div class="text-center py-8 text-gray-500 italic text-sm">à¸¢à¸±à¸à¹à¸¡à¹à¸¡à¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸«à¸¥à¸±à¸</div>
+                <!-- Deck Stats & Validation -->
+                <div class="mb-5">
+                    <div class="flex justify-between text-sm font-semibold mb-2">
+                        <span class="text-zinc-300">จำนวนการ์ดในเด็คหลัก</span>
+                        <span id="deck-counter" class="text-white">0 / 50 ใบ</span>
                     </div>
-                </div>
-
-                <!-- Export / Import Section -->
-                <div class="border-t border-gray-800 pt-4 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">ð¾ à¸à¸³à¹à¸à¹à¸² / à¸ªà¹à¸à¸­à¸­à¸à¹à¸à¹à¸</h3>
-                        <button id="import-toggle-btn" class="text-[10px] text-red-400 hover:underline">à¸à¸¥à¸´à¸à¹à¸à¸·à¹à¸­à¹à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² ð¥</button>
+                    <div class="w-full bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                        <div id="deck-progress" class="bg-pirate-red h-full transition-all duration-300" style="width: 0%"></div>
                     </div>
                     
-                    <!-- Import Input -->
-                    <div id="import-box" class="hidden space-y-2">
-                        <textarea id="import-textarea" class="w-full bg-[#111] text-gray-300 border border-gray-800 rounded-lg p-2.5 text-xs font-mono focus:outline-none focus:border-red-500" rows="3" placeholder="à¸§à¸²à¸à¹à¸à¹à¸à¹à¸à¹à¸ TCGPlayer à¸à¸µà¹à¸à¸µà¹...&#10;à¹à¸à¹à¸: 4x OP01-025"></textarea>
-                        <button id="confirm-import-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-1.5 rounded text-xs transition duration-200">à¸à¸³à¹à¸à¹à¸²à¸à¸²à¸£à¹à¸à¹à¸à¹à¸²à¹à¸à¹à¸ ð</button>
+                    <!-- Alert Message Panel -->
+                    <div id="deck-validation-msg" class="mt-3 p-3 rounded-lg text-xs bg-zinc-900 text-zinc-400 flex items-start gap-2 border border-zinc-800">
+                        <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+                        <span>เริ่มจัดเด็คโดยการเลือก Leader และเลือกเพิ่มการ์ด Character, Event, หรือ Stage ลงในเด็คของคุณ</span>
                     </div>
-
-                    <!-- Export Output -->
-                    <textarea id="export-textarea" class="w-full bg-[#111] text-gray-400 border border-gray-800 rounded-lg p-2.5 text-xs font-mono focus:outline-none" rows="3" readonly placeholder="à¸à¸±à¸à¹à¸à¹à¸à¹à¸ªà¸£à¹à¸à¹à¸¥à¹à¸§ à¸£à¸²à¸¢à¸à¸·à¹à¸­à¸à¸²à¸£à¹à¸à¸à¸°à¹à¸ªà¸à¸à¸à¸£à¸à¸à¸µà¹à¸ªà¸³à¸«à¸£à¸±à¸à¸à¸±à¸à¸¥à¸­à¸"></textarea>
                 </div>
 
+                <!-- Deck Cards List -->
+                <div class="border-t border-pirate-border pt-4">
+                    <span class="text-xs text-zinc-400 font-semibold uppercase tracking-wider block mb-3">🗃️ รายชื่อการ์ดในเด็ค</span>
+                    <div id="deck-list-container" class="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
+                        <!-- Card row templates will be rendered here -->
+                        <div class="text-center py-6 text-zinc-600 text-sm">
+                            <i class="fa-solid fa-box-open text-2xl mb-1.5 block"></i> ไม่มีเพิ่มการ์ดลงเด็ค
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Deck Price Estimate -->
+                <div class="border-t border-pirate-border mt-4 pt-4 flex justify-between items-center">
+                    <span class="text-xs text-zinc-400 font-medium">มูลค่าเด็คโดยประมาณ (TCGPlayer USD):</span>
+                    <span id="deck-total-price" class="text-sm font-bold text-pirate-accent">$0.00 USD</span>
+                </div>
+            </div>
+
+            <!-- Cost Curve Analytics -->
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
+                <h3 class="text-sm font-bold text-white tracking-wide mb-3.5 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-simple text-pirate-red"></i> โค้งค่าร่ายเด็ค (Cost Curve)
+                </h3>
+                <div class="h-28 flex items-end gap-3 px-2 pt-2 border-b border-zinc-700" id="cost-curve-bars">
+                    <!-- Cost bars will be dynamically loaded -->
+                    <div class="flex-grow text-center text-xs text-zinc-600 pb-8 w-full">เพิ่มการ์ดลงเด็คเพื่อสร้างกราฟค่าร่าย</div>
+                </div>
+                <div class="flex justify-between text-[10px] text-zinc-500 font-mono mt-1 px-1">
+                    <span>C0</span><span>C1</span><span>C2</span><span>C3</span><span>C4</span><span>C5</span><span>C6</span><span>C7</span><span>C8</span><span>C9</span><span>C10+</span>
+                </div>
+            </div>
+
+            <!-- Searcher Probabilities Calculator -->
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
+                <h3 class="text-sm font-bold text-white tracking-wide mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-pirate-red"></i> คำนวณโอกาสจั่ว (Searcher % Odds)
+                </h3>
+                <p class="text-[11px] text-zinc-400 mb-4">สถิติโอกาสที่เอฟเฟกต์การ์ดส่องหาการ์ดที่ต้องการได้สำเร็จตามสัดส่วนการ์ดคงเหลือ</p>
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block text-zinc-400 mb-1">จำนวนเป้าหมายในเด็ค:</label>
+                        <input type="number" id="calc-targets" value="4" min="1" max="50" oninput="updateSearcherOdds()" class="w-full bg-zinc-900 border border-pirate-border rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-pirate-red font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-400 mb-1">การ์ดที่ถูกส่องดู (ใบ):</label>
+                        <input type="number" id="calc-look" value="5" min="1" max="10" oninput="updateSearcherOdds()" class="w-full bg-zinc-900 border border-pirate-border rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-pirate-red font-mono">
+                    </div>
+                </div>
+                <div class="mt-4 bg-zinc-900/80 p-3 rounded-lg flex justify-between items-center border border-zinc-800">
+                    <span class="text-xs text-zinc-400 font-medium">โอกาสเจอเป้าหมายอย่างน้อย 1 ใบ:</span>
+                    <span id="calc-odds-result" class="text-lg font-bold text-green-400 font-mono">-- %</span>
+                </div>
+            </div>
+
+            <!-- TCGPlayer Mass Export Box -->
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
+                <h3 class="text-sm font-bold text-white tracking-wide mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-file-export text-pirate-red"></i> ส่งออกเด็คลิสต์ (Export)
+                </h3>
+                <textarea id="deck-export-area" readonly placeholder="จัดเด็คสำเร็จ รายชื่อในรูปแบบ TCGPlayer / Simulator จะปรากฏที่นี่เพื่อนำไปวางใช้งาน..." class="w-full bg-zinc-900 border border-pirate-border rounded-lg p-3 text-xs text-zinc-300 font-mono focus:outline-none focus:border-pirate-red" rows="4"></textarea>
             </div>
         </section>
 
-        <!-- Right Side: Card Finder (7 Cols) -->
-        <section class="lg:col-span-7 space-y-6">
+        <!-- Right Column: Card Database (7/12) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
             
-            <!-- Controls & Filters Panel -->
-            <div class="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-2xl space-y-4">
-                <h2 class="text-lg font-bold text-gray-100 flex items-center gap-2">
-                    <span class="text-red-500">ð</span> à¸à¹à¸à¸«à¸²à¹à¸¥à¸°à¸à¸£à¸­à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dropdown Select Set -->
+            <!-- Control Filters Deck Dashboard -->
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- Set Selection -->
                     <div>
-                        <label for="pack-selector" class="text-xs font-semibold text-gray-400 block mb-1.5">à¸à¸¸à¸à¸à¸²à¸£à¹à¸ (Set):</label>
-                        <select id="pack-selector" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
-                            <option value="">-- à¸à¸³à¸¥à¸±à¸à¹à¸«à¸¥à¸à¸£à¸²à¸¢à¸à¸²à¸£à¸à¸¸à¸à¸à¸²à¸£à¹à¸ --</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">📦 ชุดการ์ดที่จัดเด็ค</label>
+                        <div class="relative">
+                            <select id="set-select" onchange="loadSetCards()" class="w-full bg-zinc-950 border border-pirate-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pirate-red appearance-none cursor-pointer">
+                                <option value="loading">⚓ กำลังโหลดรายชื่อชุดการ์ด...</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Fast Text Search -->
+                    <!-- Search Input -->
                     <div>
-                        <label for="search-input" class="text-xs font-semibold text-gray-400 block mb-1.5">à¸à¹à¸à¸«à¸²à¸à¹à¸§à¸ (à¸à¸·à¹à¸­ / à¹à¸¥à¸à¸£à¸«à¸±à¸ª / à¹à¸­à¸à¹à¸à¸à¸à¹):</label>
-                        <input id="search-input" type="text" placeholder="à¸à¸´à¸¡à¸à¹à¹à¸à¸·à¹à¸­à¸à¹à¸à¸«à¸²..." class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
-                    </div>
-                </div>
-
-                <!-- Advanced Filters -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <!-- Category Select -->
-                    <div>
-                        <label for="category-filter" class="text-xs font-semibold text-gray-400 block mb-1.5">à¸à¸£à¸°à¹à¸ à¸à¸à¸²à¸£à¹à¸ (Category):</label>
-                        <select id="category-filter" class="w-full bg-[#242424] text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
-                            <option value="ALL">à¸à¸±à¹à¸à¸«à¸¡à¸ (All Types)</option>
-                            <option value="Leader">Leader (à¸¥à¸µà¸à¹à¸à¸­à¸£à¹)</option>
-                            <option value="Character">Character (à¸à¸²à¹à¸£à¸à¹à¸à¸­à¸£à¹)</option>
-                            <option value="Event">Event (à¸­à¸µà¹à¸§à¸à¸à¹)</option>
-                            <option value="Stage">Stage (à¸ªà¹à¸à¸)</option>
-                        </select>
-                    </div>
-
-                    <!-- Color Filter Checkboxes -->
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 block mb-1.5">à¸ªà¸µà¸à¸²à¸£à¹à¸ (Color):</label>
-                        <div class="flex flex-wrap gap-2">
-                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-red-800 bg-red-950/20 text-red-500 transition duration-150" data-color="Red">à¹à¸à¸</button>
-                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-blue-800 bg-blue-950/20 text-blue-400 transition duration-150" data-color="Blue">à¸à¹à¸²</button>
-                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-green-800 bg-green-950/20 text-green-500 transition duration-150" data-color="Green">à¹à¸à¸µà¸¢à¸§</button>
-                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-yellow-800 bg-yellow-950/20 text-yellow-500 transition duration-150" data-color="Yellow">à¹à¸«à¸¥à¸·à¸­à¸</button>
-                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-gray-700 bg-gray-900 text-gray-400 transition duration-150" data-color="Black">à¸à¸³</button>
-                            <button class="color-btn px-2.5 py-1 rounded text-xs font-bold border border-purple-800 bg-purple-950/20 text-purple-400 transition duration-150" data-color="Purple">à¸¡à¹à¸§à¸</button>
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">🔍 ค้นหาละเอียด</label>
+                        <div class="relative">
+                            <input type="text" id="search-input" oninput="filterCards()" placeholder="ค้นหารหัสการ์ด, ชื่อ หรือข้อความเอฟเฟกต์..." class="w-full bg-zinc-950 border border-pirate-border rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-pirate-red">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-500">
+                                <i class="fa-solid fa-search text-sm"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Card Grid Section -->
-            <div class="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-2xl space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-100 flex items-center gap-2">
-                        <span>ð´</span> à¸à¸¥à¸±à¸à¸à¸²à¸£à¹à¸ (Card Database)
-                    </h3>
-                    <span id="filtered-count" class="text-xs bg-red-950 text-red-400 border border-red-900 px-3 py-1 rounded-full font-mono font-bold">
-                        à¸à¸³à¸¥à¸±à¸à¹à¸«à¸¥à¸...
-                    </span>
+                <!-- Color Filter Chips -->
+                <div class="mb-3.5">
+                    <span class="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">เลือกสีการ์ด</span>
+                    <div class="flex flex-wrap gap-2" id="color-chips">
+                        <button onclick="toggleColorFilter('Red')" class="color-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700 active:scale-95" data-color="Red">แดง</button>
+                        <button onclick="toggleColorFilter('Green')" class="color-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700 active:scale-95" data-color="Green">เขียว</button>
+                        <button onclick="toggleColorFilter('Blue')" class="color-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700 active:scale-95" data-color="Blue">น้ำเงิน</button>
+                        <button onclick="toggleColorFilter('Purple')" class="color-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700 active:scale-95" data-color="Purple">ม่วง</button>
+                        <button onclick="toggleColorFilter('Black')" class="color-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700 active:scale-95" data-color="Black">ดำ</button>
+                        <button onclick="toggleColorFilter('Yellow')" class="color-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700 active:scale-95" data-color="Yellow">เหลือง</button>
+                    </div>
                 </div>
 
-                <div id="card-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <!-- Cards will be dynamically rendered here -->
-                    <div class="col-span-full py-20 text-center text-gray-500 italic">
-                        à¸à¸³à¸¥à¸±à¸à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­à¹à¸à¸´à¸£à¹à¸à¹à¸§à¸­à¸£à¹à¸«à¸¥à¸±à¸à¹à¸à¸·à¹à¸­à¹à¸«à¸¥à¸à¸à¸²à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸... â
+                <!-- Category Filter Chips -->
+                <div>
+                    <span class="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">ประเภทของการ์ด</span>
+                    <div class="flex flex-wrap gap-2" id="category-chips">
+                        <button onclick="toggleCategoryFilter('Leader')" class="cat-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700" data-cat="Leader">Leader</button>
+                        <button onclick="toggleCategoryFilter('Character')" class="cat-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700" data-cat="Character">Character</button>
+                        <button onclick="toggleCategoryFilter('Event')" class="cat-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700" data-cat="Event">Event</button>
+                        <button onclick="toggleCategoryFilter('Stage')" class="cat-chip px-3 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 transition-all hover:bg-zinc-700" data-cat="Stage">Stage</button>
                     </div>
                 </div>
             </div>
+
+            <!-- Card Grid Result View -->
+            <div class="bg-pirate-panel border border-pirate-border rounded-xl p-5 shadow-md flex-grow flex flex-col min-h-[500px]">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-pirate-border">
+                    <span class="text-xs text-zinc-400 font-semibold uppercase tracking-wider" id="card-results-counter">กำลังตรวจสอบฐานข้อมูล...</span>
+                    <span class="text-xs text-zinc-500 flex items-center gap-1"><i class="fa-solid fa-bolt text-yellow-500"></i> ดึงข้อมูล API สด</span>
+                </div>
+
+                <!-- Main Card Database Grid Grid -->
+                <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[750px] pr-1">
+                    <!-- Spining Load Indicator -->
+                    <div class="col-span-full py-16 text-center text-zinc-500">
+                        <i class="fa-solid fa-spinner fa-spin text-3xl text-pirate-red mb-3"></i>
+                        <p class="text-sm">กำลังเชื่อมโยงและโหลดคลังข้อมูล One Piece TCG...</p>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
     </main>
 
-    <!-- JavaScript Application Logic -->
+    <!-- Footer Area Info -->
+    <footer class="bg-pirate-panel border-t border-pirate-border py-4 text-center text-xs text-zinc-500 mt-auto">
+        <p>© 2026 Card Kaizoku Static Builder. Powered by buhbbl/punk-records Global database.</p>
+        <p class="text-[10px] text-zinc-600 mt-1 max-w-xl mx-auto px-4">All Card Game assets, images, and brand data are copyrighted by © Eiichiro Oda / Shueisha, Toei Animation, and Bandai Namco Entertainment Inc. This is a static, fan-made application.</p>
+    </footer>
+
+    <!-- App Logic Execution Script Javascript -->
     <script>
-        const PACKS_URL = "https://raw.githubusercontent.com/buhbbl/punk-records/main/english/packs.json";
-        const CARDS_BASE_URL = "https://raw.githubusercontent.com/buhbbl/punk-records/main/english/cards/";
+        // --- System Data States ---
+        let packsList = [];
+        let cardDatabase = [];
+        let priceDatabase = {};
         
-        let allPacks = {};
-        let activePackCards = [];
-        let deck = {}; // {card_id: count}
-        let leader = null;
-        let selectedColors = new Set(); // Multi-select colors
+        let deck = {}; // { cardId: count }
+        let selectedLeader = null; // Full Card Data Object
+        
+        let activeColorsFilter = [];
+        let activeCategoriesFilter = [];
 
-        // Initialize App
-        async function init() {
-            loadDeckFromStorage();
-            await fetchPacks();
-            setupEventListeners();
-        }
+        // CDN Sources
+        const PACKS_API = "https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/packs.json";
+        const PRICES_API = "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/data/prices/summary.json";
 
-        // Fetch list of packs and populate dropdown
-        async function fetchPacks() {
+        // Initialize application
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchPriceDatabase();
+            await fetchPacksList();
+            updateSearcherOdds();
+        });
+
+        // 1. Fetch Price data
+        async function fetchPriceDatabase() {
             try {
-                const res = await fetch(PACKS_URL);
-                if (!res.ok) throw new Error("Failed to load packs");
-                allPacks = await res.json();
-                
-                const packSelector = document.getElementById("pack-selector");
-                packSelector.innerHTML = "";
-                
-                // Group packs for clean presentation (Boosters, Starters, Extra, etc.)
-                const packsArray = Object.values(allPacks);
-                
-                // Set order priority (boosters first, newer first)
-                packsArray.sort((a, b) => b.id.localeCompare(a.id));
-
-                packsArray.forEach(p => {
-                    const option = document.createElement("option");
-                    option.value = p.id;
-                    option.innerText = p.raw_title || `${p.code} - ${p.name}`;
-                    packSelector.appendChild(option);
-                });
-
-                // Auto select OP-01 initially or first item
-                const op01Option = packsArray.find(p => p.raw_title.includes("[OP-01]"));
-                if (op01Option) {
-                    packSelector.value = op01Option.id;
-                } else {
-                    packSelector.selectedIndex = 0;
+                const response = await fetch(PRICES_API);
+                if (response.ok) {
+                    const data = await response.json();
+                    priceDatabase = data.cards || {};
                 }
-
-                await fetchCardsForSelectedPack();
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById("card-grid").innerHTML = `
-                    <div class="col-span-full py-10 text-center text-red-500 font-bold bg-red-950/20 border border-red-900 rounded-xl">
-                        â à¹à¸«à¸¥à¸à¸à¸¸à¸à¸à¸²à¸£à¹à¸à¸¥à¹à¸¡à¹à¸«à¸¥à¸§ à¸à¸£à¸¸à¸à¸²à¸£à¸µà¹à¸à¸£à¸à¸«à¸à¹à¸²à¹à¸§à¹à¸à¹à¸«à¸¡à¹à¸­à¸µà¸à¸à¸£à¸±à¹à¸
-                    </div>
-                `;
+            } catch (e) {
+                console.warn("Failed to fetch price summaries, continuing anyway.", e);
             }
         }
 
-        // Fetch cards of selected pack
-        async function fetchCardsForSelectedPack() {
-            const packId = document.getElementById("pack-selector").value;
-            const countLabel = document.getElementById("filtered-count");
-            countLabel.innerText = "à¸à¸³à¸¥à¸±à¸à¸à¸¶à¸à¸à¹à¸­à¸¡à¸¹à¸¥...";
-            
+        // 2. Fetch Set lists and build dropdown selector
+        async function fetchPacksList() {
             try {
-                const res = await fetch(`${CARDS_BASE_URL}${packId}.json`);
-                if (!res.ok) throw new Error("Failed to fetch set cards");
-                activePackCards = await res.json();
-                
-                filterAndRender();
-            } catch (err) {
-                console.error(err);
-                document.getElementById("card-grid").innerHTML = `
-                    <div class="col-span-full py-10 text-center text-red-500 font-bold bg-red-950/20 border border-red-900 rounded-xl">
-                        â à¹à¸¡à¹à¸ªà¸²à¸¡à¸²à¸£à¸à¸à¸¶à¸à¸£à¸¹à¸à¸ à¸²à¸à¹à¸¥à¸°à¸à¸²à¸£à¹à¸à¹à¸à¸à¸¸à¸à¸à¸µà¹à¹à¸à¹à¸à¸±à¹à¸§à¸à¸£à¸²à¸§
-                    </div>
-                `;
-            }
-        }
-
-        // Apply filters (text search, colors, category)
-        function filterAndRender() {
-            const query = document.getElementById("search-input").value.toLowerCase().trim();
-            const cat = document.getElementById("category-filter").value;
-            
-            const filtered = activePackCards.filter(card => {
-                // Category match
-                if (cat !== "ALL" && card.category !== cat) return false;
-
-                // Color match (AND filter if colors are selected)
-                if (selectedColors.size > 0) {
-                    const hasColor = card.colors.some(col => selectedColors.has(col));
-                    if (!hasColor) return false;
-                }
-
-                // Text search match (checks name, card ID, effect text, and types)
-                if (query !== "") {
-                    const id = card.id ? card.id.toLowerCase() : "";
-                    const name = card.name ? card.name.toLowerCase() : "";
-                    const effect = card.effect ? card.effect.toLowerCase() : "";
-                    const types = card.types ? card.types.join(" ").toLowerCase() : "";
+                const response = await fetch(PACKS_API);
+                if (response.ok) {
+                    const data = await response.json();
+                    packsList = Object.values(data);
                     
-                    if (!id.includes(query) && !name.includes(query) && !effect.includes(query) && !types.includes(query)) {
-                        return false;
-                    }
-                }
+                    // Filter sets list to keep only boosters, extra packs, starter decks, promos
+                    const select = document.getElementById('set-select');
+                    select.innerHTML = ''; // Clear loaded spinner
+                    
+                    // Sort packs list (newest first based on code or ID)
+                    packsList.sort((a, b) => b.id.localeCompare(a.id));
 
-                return true;
+                    packsList.forEach(pack => {
+                        const option = document.createElement('option');
+                        option.value = pack.id;
+                        
+                        // Parse name
+                        const title = pack.raw_title || pack.title_parts.title;
+                        option.textContent = title;
+                        
+                        // Auto-select OP-16 or OP-17 if available as default
+                        if (title.includes("OP-16") || title.includes("OP16")) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+
+                    // Trigger first cards load
+                    await loadSetCards();
+                }
+            } catch (e) {
+                document.getElementById('cards-grid').innerHTML = `
+                    <div class="col-span-full py-16 text-center text-pirate-red">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
+                        <p class="text-sm font-semibold">ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ฐานข้อมูลได้</p>
+                        <p class="text-xs text-zinc-500 mt-1">กรุณาลองเปิดใหม่อีกครั้งในภายหลัง</p>
+                    </div>`;
+            }
+        }
+
+        // 3. Load Cards inside selected pack
+        async function loadSetCards() {
+            const select = document.getElementById('set-select');
+            const packId = select.value;
+            const grid = document.getElementById('cards-grid');
+            
+            grid.innerHTML = `
+                <div class="col-span-full py-16 text-center text-zinc-500">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl text-pirate-red mb-3"></i>
+                    <p class="text-sm">กำลังโหลดคลังการ์ดชุดที่เลือก...</p>
+                </div>`;
+
+            try {
+                const cardsApi = `https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/english-asia/cards/${packId}.json`;
+                const response = await fetch(cardsApi);
+                if (response.ok) {
+                    cardDatabase = await response.json();
+                    filterCards();
+                } else {
+                    throw new Error("Unable to fetch cards data");
+                }
+            } catch (e) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-pirate-red">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
+                        <p class="text-sm font-semibold">การดึงข้อมูลการ์ดขัดข้อง</p>
+                        <p class="text-xs text-zinc-500 mt-1">ชุดการ์ดนี้อาจยังไม่ได้ถูกอัปโหลดขึ้นเซิร์ฟเวอร์สากลหลัก</p>
+                    </div>`;
+            }
+        }
+
+        // 4. Client-side Search and Filtering logic
+        function filterCards() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            const grid = document.getElementById('cards-grid');
+            
+            const filtered = cardDatabase.filter(card => {
+                // Search term match
+                const nameMatch = card.name ? card.name.toLowerCase().includes(searchQuery) : false;
+                const idMatch = card.id ? card.id.toLowerCase().includes(searchQuery) : false;
+                const effectMatch = card.effect ? card.effect.toLowerCase().includes(searchQuery) : false;
+                const typeMatch = card.types ? card.types.some(t => t.toLowerCase().includes(searchQuery)) : false;
+                const textMatch = !searchQuery || nameMatch || idMatch || effectMatch || typeMatch;
+
+                // Color filter match
+                const colorMatch = activeColorsFilter.length === 0 || 
+                    (card.colors && card.colors.some(c => activeColorsFilter.includes(c)));
+
+                // Category filter match
+                const categoryMatch = activeCategoriesFilter.length === 0 || 
+                    activeCategoriesFilter.includes(card.category);
+
+                return textMatch && colorMatch && categoryMatch;
             });
 
-            document.getElementById("filtered-count").innerText = `à¸à¸ ${filtered.length} à¹à¸`;
-            renderGrid(filtered);
-        }
+            document.getElementById('card-results-counter').textContent = `ผลลัพธ์: พบการ์ด ${filtered.length} ใบ`;
 
-        // Render card grid with referrerpolicy bypass proxy
-        function renderGrid(cards) {
-            const grid = document.getElementById("card-grid");
-            grid.innerHTML = "";
-
-            if (cards.length === 0) {
+            if (filtered.length === 0) {
                 grid.innerHTML = `
-                    <div class="col-span-full py-16 text-center text-gray-500 italic">
-                        à¹à¸¡à¹à¸à¸à¸à¸²à¸£à¹à¸à¸à¸£à¸à¸à¸²à¸¡à¹à¸à¸·à¹à¸­à¸à¹à¸à¸à¹à¸à¸«à¸² ð
-                    </div>
-                `;
+                    <div class="col-span-full py-16 text-center text-zinc-600">
+                        <i class="fa-solid fa-magnifying-glass text-3xl mb-3 block"></i>
+                        <p class="text-sm">ไม่พบการ์ดที่ตรงกับเงื่อนไขการค้นหาของคุณ</p>
+                    </div>`;
                 return;
             }
 
+            renderCardGrid(filtered);
+        }
+
+        // Render card elements inside grid layout
+        function renderCardGrid(cards) {
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+
             cards.forEach(card => {
-                const isLeader = card.category === "Leader";
-                const countInDeck = deck[card.id] || 0;
+                const cardId = card.id;
+                const countInDeck = deck[cardId] || 0;
+                
+                // Get image url
+                const imgUrl = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${cardId}.png`;
+                
+                // Get price
+                const priceData = priceDatabase[cardId];
+                const priceDisplay = priceData ? `$${parseFloat(priceData.usd).toFixed(2)}` : 'N/A';
 
-                // Create proxy image url using weserv to bypass all hotlink protection perfectly
-                const cleanImgUrl = card.image ? card.image.split("?")[0] : "";
-                const proxiedImgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanImgUrl)}&w=260&error=ssl`;
-
-                const cardDiv = document.createElement("div");
-                cardDiv.className = "bg-[#1f1f1f] border border-gray-800 rounded-2xl p-3 flex flex-col justify-between transition duration-200 card-glow shadow-md";
+                const cardDiv = document.createElement('div');
+                cardDiv.className = "bg-zinc-900 border border-pirate-border rounded-xl p-3 text-center flex flex-col justify-between transition-all duration-300 card-glow";
                 
                 cardDiv.innerHTML = `
-                    <div class="space-y-3">
-                        <!-- Image Container with loader -->
-                        <div class="relative group overflow-hidden rounded-xl bg-neutral-900 aspect-[3/4] flex items-center justify-center">
-                            <img src="${proxiedImgUrl}" alt="${card.name}" class="w-full h-full object-contain rounded-xl transition duration-300" onerror="this.onerror=null; this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png';">
+                    <div>
+                        <div class="relative overflow-hidden rounded-lg aspect-[3/4.2] mb-2 bg-zinc-950">
+                            <!-- Bypassing image hotlinking via metadata no-referrer directly inside client browser -->
+                            <img src="${imgUrl}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full h-full object-contain" loading="lazy">
                         </div>
-
-                        <!-- Card Info -->
-                        <div class="space-y-1">
-                            <h4 class="text-xs font-bold truncate text-white" title="${card.name}">${card.name}</h4>
-                            <div class="flex justify-between items-center text-[10px] text-gray-400 font-mono">
-                                <span>${card.id}</span>
-                                <span>${card.category}</span>
-                            </div>
-                            <!-- Color Badge -->
-                            <div class="flex gap-1">
-                                ${card.colors.map(col => `
-                                    <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${
-                                        col === 'Red' ? 'bg-red-950/80 text-red-400 border border-red-900/40' :
-                                        col === 'Blue' ? 'bg-blue-950/80 text-blue-400 border border-blue-900/40' :
-                                        col === 'Green' ? 'bg-green-950/80 text-green-400 border border-green-900/40' :
-                                        col === 'Yellow' ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-900/40' :
-                                        col === 'Black' ? 'bg-gray-900 text-gray-400 border border-gray-800' :
-                                        'bg-purple-950/80 text-purple-400 border border-purple-900/40'
-                                    } border">${col}</span>
-                                `).join("")}
-                            </div>
-                        </div>
+                        <h4 class="text-xs font-bold text-white truncate px-1">${card.name}</h4>
+                        <div class="text-[10px] text-zinc-400 mt-0.5 font-mono">${cardId} | ${card.category}</div>
+                        <div class="text-[11px] text-pirate-accent font-semibold mt-1 font-mono">${priceDisplay}</div>
                     </div>
-
-                    <!-- Actions -->
-                    <div class="mt-4 pt-2 border-t border-gray-800/60">
-                        ${isLeader ? `
-                            <button onclick="setAsLeader('${card.id}')" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xs py-2 rounded-lg transition duration-150">
-                                à¹à¸¥à¸·à¸­à¸à¹à¸à¹à¸ Leader ð
-                            </button>
-                        ` : `
-                            <button onclick="addCardToDeck('${card.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 px-3 rounded-lg transition duration-150 flex justify-between items-center">
-                                <span>à¹à¸à¸´à¹à¸¡à¸à¸²à¸£à¹à¸</span>
-                                <span class="bg-red-900 text-red-200 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">${countInDeck}</span>
-                            </button>
-                        `}
+                    <div class="mt-3 space-y-1.5">
+                        ${card.category === 'Leader' ? 
+                            `<button onclick='setAsLeader(${JSON.stringify(card)})' class="w-full py-1.5 bg-zinc-800 hover:bg-pirate-red text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-crown"></i> เลือกเป็น Leader
+                             </button>` :
+                            `<button onclick='addToDeck(${JSON.stringify(card)})' class="w-full py-1.5 ${countInDeck >= 4 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-pirate-red hover:bg-pirate-redHover text-white'} text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> เพิ่มลงเด็ค (${countInDeck})
+                             </button>`
+                        }
                     </div>
                 `;
-                
                 grid.appendChild(cardDiv);
             });
         }
 
-        // Leader Handler
-        window.setAsLeader = function(cardId) {
-            // Find card metadata
-            const card = activePackCards.find(c => c.id === cardId);
-            if (!card) return;
-            
-            leader = card;
-            saveDeckToStorage();
-            updateDeckUI();
-            filterAndRender();
-        };
-
-        window.removeLeader = function() {
-            leader = null;
-            saveDeckToStorage();
-            updateDeckUI();
-            filterAndRender();
-        };
-
-        // Deck Add/Remove Handlers
-        window.addCardToDeck = function(cardId) {
-            const currentCount = deck[cardId] || 0;
-            const totalCards = Object.values(deck).reduce((a, b) => a + b, 0);
-
-            if (totalCards >= 50) {
-                alert("à¹à¸à¹à¸à¸«à¸¥à¸±à¸à¸¡à¸µà¸à¸²à¸£à¹à¸à¸à¸£à¸à¸à¸³à¸«à¸à¸ 50 à¹à¸à¹à¸£à¸µà¸¢à¸à¸£à¹à¸­à¸¢à¹à¸¥à¹à¸§!");
-                return;
+        // Toggle Filter Handlers
+        function toggleColorFilter(color) {
+            const index = activeColorsFilter.indexOf(color);
+            if (index > -1) {
+                activeColorsFilter.splice(index, 1);
+            } else {
+                activeColorsFilter.push(color);
             }
+            
+            // Toggle active visual states
+            document.querySelectorAll(`#color-chips button[data-color="${color}"]`).forEach(btn => {
+                btn.classList.toggle('bg-pirate-red');
+                btn.classList.toggle('text-white');
+                btn.classList.toggle('bg-zinc-800');
+            });
+            filterCards();
+        }
 
+        function toggleCategoryFilter(cat) {
+            const index = activeCategoriesFilter.indexOf(cat);
+            if (index > -1) {
+                activeCategoriesFilter.splice(index, 1);
+            } else {
+                activeCategoriesFilter.push(cat);
+            }
+            
+            document.querySelectorAll(`#category-chips button[data-cat="${cat}"]`).forEach(btn => {
+                btn.classList.toggle('bg-pirate-red');
+                btn.classList.toggle('text-white');
+                btn.classList.toggle('bg-zinc-800');
+            });
+            filterCards();
+        }
+
+        // Set active Leader
+        function setAsLeader(card) {
+            selectedLeader = card;
+            document.getElementById('leader-empty').classList.add('hidden');
+            
+            const leaderActive = document.getElementById('leader-active');
+            leaderActive.classList.remove('hidden');
+            
+            document.getElementById('leader-img').src = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${card.id}.png`;
+            document.getElementById('leader-name').textContent = card.name;
+            document.getElementById('leader-id').textContent = card.id;
+            
+            // Build leader colors badge
+            const colorsContainer = document.getElementById('leader-colors');
+            colorsContainer.innerHTML = '';
+            card.colors.forEach(col => {
+                const badge = document.createElement('span');
+                badge.className = `px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm`;
+                badge.style.backgroundColor = getColorHex(col);
+                badge.textContent = col;
+                colorsContainer.appendChild(badge);
+            });
+
+            // Trigger deck render to check colors mismatch
+            renderMyDeck();
+            filterCards();
+        }
+
+        function removeLeader() {
+            selectedLeader = null;
+            document.getElementById('leader-active').classList.add('hidden');
+            document.getElementById('leader-empty').classList.remove('hidden');
+            renderMyDeck();
+            filterCards();
+        }
+
+        // 5. Deck Modification Logic
+        function addToDeck(card) {
+            const cardId = card.id;
+            const currentCount = deck[cardId] || 0;
+            
             if (currentCount >= 4) {
-                alert("à¹à¸ªà¹à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¸µà¸¢à¸§à¸à¸±à¸à¸à¹à¸³à¸à¸±à¸à¹à¸à¹à¸ªà¸¹à¸à¸ªà¸¸à¸à¹à¸¡à¹à¹à¸à¸´à¸ 4 à¹à¸!");
+                alert("กติกาทางการ: ไม่สามารถใส่การ์ดซ้ำได้เกิน 4 ใบในหนึ่งเด็ค!");
                 return;
             }
 
             deck[cardId] = currentCount + 1;
-            saveDeckToStorage();
-            updateDeckUI();
+            renderMyDeck();
             
-            // Re-render single element or full grid to update badges
-            filterAndRender();
-        };
-
-        window.subtractCardFromDeck = function(cardId) {
-            if (deck[cardId]) {
-                deck[cardId] -= 1;
-                if (deck[cardId] <= 0) {
-                    delete deck[cardId];
-                }
-                saveDeckToStorage();
-                updateDeckUI();
-                filterAndRender();
-            }
-        };
-
-        // Render Deck List & Verification & Cost Curve
-        function updateDeckUI() {
-            const listContainer = document.getElementById("deck-items-list");
-            listContainer.innerHTML = "";
-
-            const totalQty = Object.values(deck).reduce((a, b) => a + b, 0);
-            document.getElementById("deck-qty").innerText = totalQty;
-            document.getElementById("deck-progress").style.width = `${(totalQty / 50) * 100}%`;
-
-            // Active Leader Slot
-            const leaderDisplay = document.getElementById("leader-display");
-            if (leader) {
-                const proxiedImgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(leader.image.split("?")[0])}&w=160&error=ssl`;
-                leaderDisplay.innerHTML = `
-                    <div class="flex gap-4 items-center w-full text-left">
-                        <img src="${proxiedImgUrl}" class="w-16 rounded-lg object-contain bg-neutral-900 border border-gray-700 shadow" onerror="this.src='https://asia-en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png'">
-                        <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-bold text-yellow-500 truncate">${leader.name}</h4>
-                            <p class="text-[10px] text-gray-400 font-mono">${leader.id}</p>
-                            <div class="flex gap-1 mt-1">
-                                ${leader.colors.map(col => `<span class="text-[9px] px-1 bg-red-950/60 border border-red-900 text-red-400 font-bold rounded">${col}</span>`).join("")}
-                            </div>
-                        </div>
-                        <button onclick="removeLeader()" class="text-xs text-red-500 hover:text-red-400 font-bold border border-red-900/50 bg-red-950/20 px-2 py-1 rounded">à¹à¸à¸¥à¸µà¹à¸¢à¸ â</button>
-                    </div>
-                `;
-            } else {
-                leaderDisplay.innerHTML = `
-                    <div class="text-sm text-gray-500 italic">à¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹</div>
-                    <p class="text-xs text-gray-600 mt-1">à¸à¸à¸à¸¸à¹à¸¡ "à¹à¸¥à¸·à¸­à¸à¹à¸à¹à¸ Leader" à¸à¸µà¹à¸à¸²à¸£à¹à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹à¸à¹à¸²à¸à¸à¸§à¸²</p>
-                `;
-            }
-
-            // Render list of deck cards
-            const deckItems = Object.entries(deck);
-            if (deckItems.length === 0) {
-                listContainer.innerHTML = `<div class="text-center py-8 text-gray-500 italic text-sm">à¸¢à¸±à¸à¹à¸¡à¹à¸¡à¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸«à¸¥à¸±à¸</div>`;
-            } else {
-                // Find card info from activePackCards (or fallback if from another set)
-                deckItems.forEach(([cardId, count]) => {
-                    let card = activePackCards.find(c => c.id === cardId);
-                    
-                    // Mock card model if not loaded yet
-                    if (!card) {
-                        card = { id: cardId, name: cardId, colors: ["Red"], cost: 0 };
-                    }
-
-                    // Validate card color matches Leader color
-                    let isMismatch = false;
-                    let validationBadge = "";
-                    if (leader) {
-                        isMismatch = !card.colors.some(col => leader.colors.includes(col));
-                        if (isMismatch) {
-                            validationBadge = `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[8px] bg-red-950 text-red-400 font-bold border border-red-900/50">à¸ªà¸µà¹à¸¡à¹à¸à¸£à¸ â ï¸</span>`;
-                        }
-                    }
-
-                    const row = document.createElement("div");
-                    row.className = "flex justify-between items-center bg-[#222] px-3 py-2 rounded-xl border border-gray-800/80 hover:border-gray-700/80 transition shadow-inner";
-                    row.innerHTML = `
-                        <div class="flex-1 min-w-0 pr-2 text-left">
-                            <div class="text-xs font-semibold text-white truncate">${card.name}</div>
-                            <div class="text-[9px] text-gray-400 font-mono">${cardId} ${validationBadge}</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="subtractCardFromDeck('${cardId}')" class="bg-[#1a1a1a] hover:bg-gray-800 text-white rounded-lg w-6 h-6 flex items-center justify-center text-xs font-bold border border-gray-800">â</button>
-                            <span class="text-xs font-bold text-red-500 font-mono w-4 text-center">${count}</span>
-                            <button onclick="addCardToDeck('${cardId}')" class="bg-[#1a1a1a] hover:bg-gray-800 text-white rounded-lg w-6 h-6 flex items-center justify-center text-xs font-bold border border-gray-800">â</button>
-                        </div>
-                    `;
-                    listContainer.appendChild(row);
-                });
-            }
-
-            // Rules validator messaging
-            const validationBox = document.getElementById("validation-box");
-            if (!leader) {
-                validationBox.innerHTML = `<span>â¹ï¸</span> <span>à¸à¸£à¸¸à¸à¸²à¹à¸¥à¸·à¸­à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹ à¹à¸à¸·à¹à¸­à¸à¸£à¸§à¸à¸ªà¸­à¸à¸à¸§à¸²à¸¡à¸ªà¸­à¸à¸à¸¥à¹à¸­à¸à¸à¸­à¸à¸ªà¸µà¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸</span>`;
-                validationBox.className = "text-xs p-3 rounded-lg bg-yellow-950/30 border border-yellow-900/50 text-yellow-400 flex items-start gap-2";
-            } else if (totalQty < 50) {
-                validationBox.innerHTML = `<span>â¹ï¸</span> <span>à¹à¸à¹à¸à¸¢à¸±à¸à¸à¸²à¸à¸à¸²à¸£à¹à¸à¸­à¸µà¸ <strong>${50 - totalQty} à¹à¸</strong> à¹à¸à¸·à¹à¸­à¹à¸«à¹à¸à¸£à¸ 50 à¹à¸à¸à¸­à¸à¸µ</span>`;
-                validationBox.className = "text-xs p-3 rounded-lg bg-yellow-950/30 border border-yellow-900/50 text-yellow-400 flex items-start gap-2";
-            } else if (totalQty === 50) {
-                // Check if any card has color mismatch
-                let hasColorError = false;
-                Object.keys(deck).forEach(cid => {
-                    const card = activePackCards.find(c => c.id === cid);
-                    if (card) {
-                        const match = card.colors.some(col => leader.colors.includes(col));
-                        if (!match) hasColorError = true;
-                    }
-                });
-
-                if (hasColorError) {
-                    validationBox.innerHTML = `<span>â ï¸</span> <span>à¹à¸à¹à¸à¸à¸£à¸ 50 à¹à¸à¹à¸¥à¹à¸§ à¹à¸à¹à¸¡à¸µ<strong>à¸à¸²à¸£à¹à¸à¸ªà¸µà¹à¸¡à¹à¸à¸£à¸à¸à¸±à¸à¸¥à¸µà¸à¹à¸à¸­à¸£à¹à¸à¸­à¸à¸à¸¸à¸</strong></span>`;
-                    validationBox.className = "text-xs p-3 rounded-lg bg-red-950/30 border border-red-900/50 text-red-400 flex items-start gap-2";
-                } else {
-                    validationBox.innerHTML = `<span>â</span> <span>à¸¢à¸­à¸à¹à¸¢à¸µà¹à¸¢à¸¡à¸¡à¸²à¸! à¹à¸à¹à¸à¸à¸­à¸à¸à¸¸à¸à¸à¸¹à¸à¸à¹à¸­à¸à¸à¸²à¸¡à¸à¸à¹à¸à¹à¸à¹à¸¥à¸°à¸à¸£à¹à¸­à¸¡à¸à¸³à¹à¸à¹à¸¥à¹à¸à¹à¸¥à¹à¸§</span>`;
-                    validationBox.className = "text-xs p-3 rounded-lg bg-green-950/30 border border-green-900/50 text-green-400 flex items-start gap-2";
-                }
-            }
-
-            // Render Cost Curve Chart
-            renderCostCurve();
-
-            // Export Text area rendering
-            const textLines = [];
-            if (leader) {
-                textLines.push(`1x ${leader.id}`);
-            }
-            Object.entries(deck).forEach(([id, count]) => {
-                textLines.push(`${count}x ${id}`);
-            });
-            document.getElementById("export-textarea").value = textLines.join("\n");
+            // Flash success state by refreshing target search results count visualizer
+            filterCards();
         }
 
-        // Render cost curve dynamic bars
-        function renderCostCurve() {
-            const section = document.getElementById("cost-curve-section");
-            const container = document.getElementById("curve-chart-container");
-            container.innerHTML = "";
+        function renderMyDeck() {
+            const listContainer = document.getElementById('deck-list-container');
+            const keys = Object.keys(deck);
+            let totalMainCards = 0;
+            let totalPrice = 0.0;
+            
+            listContainer.innerHTML = '';
 
-            if (Object.keys(deck).length === 0) {
-                section.classList.add("hidden");
+            if (keys.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-10 text-zinc-600 text-sm">
+                        <i class="fa-solid fa-box-open text-2xl mb-1.5 block"></i> ไม่มีเพิ่มการ์ดลงเด็ค
+                    </div>`;
+                updateDeckStats(0, 0);
                 return;
             }
-            section.classList.remove("hidden");
 
-            // Aggregate counts by cost values (0 to 10)
-            const costCounts = Array(11).fill(0);
-            Object.entries(deck).forEach(([cardId, count]) => {
-                const card = activePackCards.find(c => c.id === cardId);
-                if (card) {
-                    const cost = card.cost !== null ? Math.min(card.cost, 10) : 0;
-                    costCounts[cost] += count;
-                }
-            });
-
-            const maxQty = Math.max(...costCounts, 1);
-
-            costCounts.forEach((qty, costIndex) => {
-                const heightPercent = (qty / maxQty) * 100;
+            // Gather metadata of deck cards from loaded database
+            const deckItems = keys.map(id => {
+                const count = deck[id];
+                totalMainCards += count;
                 
-                const barWrapper = document.createElement("div");
-                barWrapper.className = "flex flex-col items-center flex-1 group relative h-full justify-end";
-                barWrapper.innerHTML = `
-                    <!-- Tooltip -->
-                    <span class="absolute -top-6 bg-red-600 text-white font-mono font-bold text-[9px] px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition duration-150 pointer-events-none">${qty} à¹à¸</span>
-                    <!-- Bar -->
-                    <div class="bg-gradient-to-t from-red-800 to-red-600 w-3/5 rounded-t-sm transition-all duration-300 shadow-lg" style="height: ${heightPercent}%"></div>
+                // Find card in global database or searcher indexes
+                let cardInfo = cardDatabase.find(c => c.id === id);
+                if (!cardInfo) {
+                    // Fallback stub if card selected but set changed
+                    cardInfo = { id: id, name: id, colors: [], cost: 0 };
+                }
+
+                const usdPrice = priceDatabase[id] ? parseFloat(priceDatabase[id].usd) : 0;
+                totalPrice += (usdPrice * count);
+
+                // Color validation against active leader
+                let colorMismatch = false;
+                if (selectedLeader) {
+                    const leaderColors = selectedLeader.colors || [];
+                    const cardColors = cardInfo.colors || [];
+                    if (cardColors.length > 0 && !cardColors.some(col => leaderColors.includes(col))) {
+                        colorMismatch = true;
+                    }
+                }
+
+                return {
+                    id: id,
+                    name: cardInfo.name,
+                    count: count,
+                    cost: cardInfo.cost,
+                    price: usdPrice,
+                    mismatch: colorMismatch
+                };
+            });
+
+            // Render list items
+            deckItems.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-zinc-900 border border-pirate-border rounded-lg p-2.5 hover:border-zinc-700 transition";
+                
+                const priceLabel = item.price > 0 ? `($${item.price.toFixed(2)})` : '';
+                const warningBadge = item.mismatch ? `<span class="ml-1 text-[10px] text-pirate-red font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> สีผิดกฎ!</span>` : '';
+
+                row.innerHTML = `
+                    <div class="min-w-0 flex-grow pr-3">
+                        <div class="text-xs font-bold text-white truncate">
+                            <span class="text-pirate-red font-mono mr-1">${item.count}x</span> ${item.name}
+                        </div>
+                        <div class="text-[10px] text-zinc-500 font-mono mt-0.5">${item.id} ${priceLabel} ${warningBadge}</div>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="decrementDeckCard('${item.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition">-</button>
+                        <button onclick="incrementDeckCard('${item.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition">+</button>
+                    </div>
                 `;
-                container.appendChild(barWrapper);
+                listContainer.appendChild(row);
             });
+
+            updateDeckStats(totalMainCards, totalPrice);
+            updateCostCurve(deckItems);
+            generateExportText(deckItems);
         }
 
-        // Setup UI Event listeners
-        function setupEventListeners() {
-            // Dropdown change
-            document.getElementById("pack-selector").addEventListener("change", fetchCardsForSelectedPack);
+        function incrementDeckCard(id) {
+            if (deck[id] >= 4) {
+                alert("ไม่สามารถใส่เกิน 4 ใบ!");
+                return;
+            }
+            deck[id]++;
+            renderMyDeck();
+            filterCards();
+        }
+
+        function decrementDeckCard(id) {
+            deck[id]--;
+            if (deck[id] <= 0) {
+                delete deck[id];
+            }
+            renderMyDeck();
+            filterCards();
+        }
+
+        function resetDeck() {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างรายชื่อเด็คทั้งหมด?")) {
+                deck = {};
+                selectedLeader = null;
+                removeLeader();
+            }
+        }
+
+        // Helper: Convert color string to HTML hex values
+        function getColorHex(color) {
+            const map = {
+                'Red': '#ff4b4b',
+                'Green': '#22c55e',
+                'Blue': '#3b82f6',
+                'Purple': '#a855f7',
+                'Black': '#1e293b',
+                'Yellow': '#eab308'
+            };
+            return map[color] || '#3f3f46';
+        }
+
+        // Update deck counters and warnings
+        function updateDeckStats(count, totalPrice) {
+            document.getElementById('deck-counter').textContent = `${count} / 50 ใบ`;
+            document.getElementById('deck-total-price').textContent = `$${totalPrice.toFixed(2)} USD`;
             
-            // Search inputs
-            document.getElementById("search-input").addEventListener("input", filterAndRender);
-            document.getElementById("category-filter").addEventListener("change", filterAndRender);
+            const progress = document.getElementById('deck-progress');
+            const percent = Math.min((count / 50) * 100, 100);
+            progress.style.width = `${percent}%`;
 
-            // Import Box toggle
-            const importBtn = document.getElementById("import-toggle-btn");
-            const importBox = document.getElementById("import-box");
-            importBtn.addEventListener("click", () => {
-                if (importBox.classList.contains("hidden")) {
-                    importBox.classList.remove("hidden");
-                    importBtn.innerText = "à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² â";
-                } else {
-                    importBox.classList.add("hidden");
-                    importBtn.innerText = "à¸à¸¥à¸´à¸à¹à¸à¸·à¹à¸­à¹à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² ð¥";
-                }
-            });
-
-            // Handle Import Logic
-            document.getElementById("confirm-import-btn").addEventListener("click", () => {
-                const val = document.getElementById("import-textarea").value;
-                if (!val.trim()) return;
-
-                const lines = val.split("\n");
-                const newDeck = {};
-                let newLeader = leader;
-
-                lines.forEach(line => {
-                    const match = line.trim().match(/^(\d+)x\s*([A-Za-z0-9-_]+)/i);
-                    if (match) {
-                        const count = parseInt(match[1]);
-                        const id = match[2].toUpperCase();
-                        
-                        // Treat as leader if count is 1 and set/ID structure is leader-like
-                        if (count === 1 && (id.endsWith("-001") || id.endsWith("_p1") || id.includes("L"))) {
-                            // Quick lookup or fallback placeholder
-                            newLeader = { id: id, name: id, colors: ["Red"], image: `https://en.onepiece-cardgame.com/images/cardlist/card/${id}.png` };
-                        } else {
-                            newDeck[id] = count;
-                        }
-                    }
-                });
-
-                deck = newDeck;
-                leader = newLeader;
-                saveDeckToStorage();
-                updateDeckUI();
-                filterAndRender();
-
-                importBox.classList.add("hidden");
-                importBtn.innerText = "à¸à¸¥à¸´à¸à¹à¸à¸·à¹à¸­à¹à¸à¸´à¸à¸à¸¥à¹à¸­à¸à¸à¸³à¹à¸à¹à¸² ð¥";
-                alert("à¸à¸³à¹à¸à¹à¸²à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸à¹à¸£à¸µà¸¢à¸à¸£à¹à¸­à¸¢à¹à¸¥à¹à¸§!");
-            });
-
-            // Multi color selection buttons
-            const colorButtons = document.querySelectorAll(".color-btn");
-            colorButtons.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const col = btn.getAttribute("data-color");
-                    if (selectedColors.has(col)) {
-                        selectedColors.delete(col);
-                        btn.classList.add("bg-red-950/20", "text-red-500", "border-red-800");
-                        btn.classList.remove("bg-red-600", "text-white");
-                    } else {
-                        selectedColors.add(col);
-                        btn.classList.remove("bg-red-950/20", "text-red-500", "border-red-800");
-                        btn.classList.add("bg-red-600", "text-white");
-                    }
-                    filterAndRender();
-                });
-            });
-
-            // Clear all deck
-            document.getElementById("clear-deck-btn").addEventListener("click", () => {
-                if (confirm("à¸à¸¸à¸à¹à¸à¹à¹à¸à¸«à¸£à¸·à¸­à¹à¸¡à¹à¸§à¹à¸²à¸à¹à¸­à¸à¸à¸²à¸£à¸¥à¹à¸²à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¹à¸à¹à¸à¹à¸à¹à¸à¸à¸±à¹à¸à¸«à¸¡à¸?")) {
-                    deck = {};
-                    leader = null;
-                    saveDeckToStorage();
-                    updateDeckUI();
-                    filterAndRender();
-                }
-            });
-        }
-
-        // Local Storage Helpers
-        function saveDeckToStorage() {
-            localStorage.setItem("deck_builder_deck", JSON.stringify(deck));
-            if (leader) {
-                localStorage.setItem("deck_builder_leader", JSON.stringify(leader));
+            const validationBox = document.getElementById('deck-validation-msg');
+            
+            // Verification logic rules
+            if (!selectedLeader) {
+                validationBox.className = "mt-3 p-3 rounded-lg text-xs bg-yellow-950/20 text-yellow-500 flex items-start gap-2 border border-yellow-900/30";
+                validationBox.innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <span>คุณยังไม่ได้กำหนด Leader การ์ดสีไม่ตรงกับ Leader จะยังไม่ถูกตรวจสอบความถูกต้อง</span>`;
+            } else if (count < 50) {
+                validationBox.className = "mt-3 p-3 rounded-lg text-xs bg-blue-950/20 text-blue-400 flex items-start gap-2 border border-blue-900/30";
+                validationBox.innerHTML = `
+                    <i class="fa-solid fa-circle-info mt-0.5"></i>
+                    <span>เด็คยังไม่สมบูรณ์: ปัจจุบันมีการ์ดอยู่ ${count} ใบ (ต้องการเพิ่มอีก ${50 - count} ใบเพื่อให้ถูกกฎ)</span>`;
+            } else if (count > 50) {
+                validationBox.className = "mt-3 p-3 rounded-lg text-xs bg-red-950/20 text-pirate-red flex items-start gap-2 border border-red-900/30";
+                validationBox.innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <span>เด็คไม่ถูกต้อง: มีการ์ดเกินกติกาที่กำหนด (จำกัดแค่ 50 ใบเท่านั้น ปัจจุบันมี ${count} ใบ)</span>`;
             } else {
-                localStorage.removeItem("deck_builder_leader");
+                validationBox.className = "mt-3 p-3 rounded-lg text-xs bg-green-950/20 text-green-400 flex items-start gap-2 border border-green-900/30";
+                validationBox.innerHTML = `
+                    <i class="fa-solid fa-circle-check mt-0.5"></i>
+                    <span>สมบูรณ์แบบ! เด็คของคุณมีการ์ดครบ 50 ใบ พร้อมนำไปบันทึกแชร์หรือนำเข้าโปรแกรมซิมูเลเตอร์แข่งได้ทันที!</span>`;
             }
+
+            // Realtime update probability reference deck sizes
+            updateSearcherOdds();
         }
 
-        function loadDeckFromStorage() {
-            const savedDeck = localStorage.getItem("deck_builder_deck");
-            const savedLeader = localStorage.getItem("deck_builder_leader");
+        // 6. Cost Curve dynamic CSS renderer
+        function updateCostCurve(items) {
+            const barsContainer = document.getElementById('cost-curve-bars');
+            barsContainer.innerHTML = '';
+
+            const costBuckets = Array(11).fill(0); // 0 to 10+ cost values
+            items.forEach(item => {
+                const cost = item.cost !== null ? parseInt(item.cost) : 0;
+                const index = Math.min(cost, 10);
+                costBuckets[index] += item.count;
+            });
+
+            const maxCount = Math.max(...costBuckets) || 1;
+
+            costBuckets.forEach((qty, costVal) => {
+                const barHeightPercent = (qty / maxCount) * 100;
+                const bar = document.createElement('div');
+                bar.className = "flex-grow flex flex-col items-center group relative";
+                
+                bar.innerHTML = `
+                    <div class="w-full bg-zinc-800 group-hover:bg-pirate-red/30 rounded-t h-24 flex items-end">
+                        <div class="w-full bg-pirate-red rounded-t transition-all duration-300" style="height: ${qty > 0 ? barHeightPercent : 0}%"></div>
+                    </div>
+                    <!-- Tooltip -->
+                    <span class="absolute bottom-full mb-1 bg-zinc-950 border border-pirate-border px-2 py-0.5 rounded text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity font-mono z-10 pointer-events-none">
+                        Cost ${costVal === 10 ? '10+' : costVal}: ${qty} ใบ
+                    </span>
+                `;
+                barsContainer.appendChild(bar);
+            });
+        }
+
+        // 7. Hypergeometric probability calculation formula (Searcher odds)
+        function choose(n, k) {
+            if (k < 0 || k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            if (k > n / 2) k = n - k;
+            let res = 1;
+            for (let i = 1; i <= k; i++) {
+                res = res * (n - k + i) / i;
+            }
+            return res;
+        }
+
+        function updateSearcherOdds() {
+            const targetsInput = document.getElementById('calc-targets');
+            const lookInput = document.getElementById('calc-look');
+            const resultLabel = document.getElementById('calc-odds-result');
+
+            const targets = parseInt(targetsInput.value) || 0;
+            const look = parseInt(lookInput.value) || 0;
+
+            // Total deck size default reference or actual built deck size
+            const keys = Object.keys(deck);
+            let deckSize = 50;
+            if (keys.length > 0) {
+                deckSize = keys.reduce((acc, curr) => acc + deck[curr], 0) || 50;
+            }
+
+            if (deckSize <= 0 || targets < 0 || look < 0 || look > deckSize || targets > deckSize) {
+                resultLabel.textContent = "0.00 %";
+                return;
+            }
+
+            // Prob(At least 1) = 1 - Prob(Draw exactly 0 targets)
+            // P(X=0) = (comb(deckSize - targets, look) / comb(deckSize, look))
+            const waysNoTargets = choose(deckSize - targets, look);
+            const totalWays = choose(deckSize, look);
             
-            if (savedDeck) {
-                deck = JSON.parse(savedDeck);
+            if (totalWays === 0) {
+                resultLabel.textContent = "0.00 %";
+                return;
             }
-            if (savedLeader) {
-                leader = JSON.parse(savedLeader);
-            }
+
+            const pZero = waysNoTargets / totalWays;
+            const successProb = (1.0 - pZero) * 100;
+
+            resultLabel.textContent = `${successProb.toFixed(2)} %`;
         }
 
-        // Launch Core
-        init();
+        // 8. TCGPlayer Text Exporter generator
+        function generateExportText(items) {
+            const area = document.getElementById('deck-export-area');
+            let lines = [];
+            
+            if (selectedLeader) {
+                lines.push(`1x ${selectedLeader.id}`);
+            }
+
+            items.forEach(item => {
+                lines.push(`${item.count}x ${item.id}`);
+            });
+
+            area.value = lines.join('\n');
+        }
     </script>
 </body>
 </html>
