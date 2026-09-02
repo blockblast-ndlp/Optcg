@@ -72,10 +72,14 @@
                     <p class="text-xs text-zinc-400">One Piece TCG Static Deck Builder & Analytics</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center justify-center gap-4">
                 <span class="text-xs bg-zinc-800 text-pirate-accent border border-zinc-700 px-3 py-1.5 rounded-full font-mono">
                     <i class="fa-solid fa-cloud-bolt mr-1"></i> Static Hosted (GitHub Pages Ready)
                 </span>
+                <!-- ปุ่ม อัปเดตข้อมูลการ์ดล่าสุด (Bypass CDN) -->
+                <button onclick="clearLocalCardCache()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-zinc-700 hover:border-pirate-red px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-95 shadow font-semibold">
+                    <i class="fa-solid fa-arrows-rotate text-pirate-red animate-pulse"></i> 🔄 อัปเดตข้อมูลการ์ดล่าสุด
+                </button>
                 <a href="https://github.com" target="_blank" class="text-zinc-400 hover:text-white transition text-sm flex items-center gap-2">
                     <i class="fa-brands fa-github text-xl"></i> GitHub
                 </a>
@@ -384,6 +388,13 @@
             return text.toString().toLowerCase()
                        .replace(/[\s\.\-_'’\",]/g, '')
                        .trim();
+        }
+
+        function clearLocalCardCache() {
+            if (confirm("คุณต้องการล้างแคชเครื่องเพื่อดาวน์โหลดคลังการ์ดและราคากลางใหม่ล่าสุดข้ามระบบ CDN ใช่หรือไม่? (เด็คที่บันทึกไว้จะไม่หายครับ)")) {
+                localStorage.setItem('kaizoku_force_bypass', 'true');
+                location.reload();
+            }
         }
 
         // --- System Saved Decks States ---
@@ -710,8 +721,12 @@
 
         // Fetch helper with timeout and fallback mirrors (extremely robust with Safari AbortController safety)
         async function fetchWithFallback(mirrors, subPath, timeoutMs = 4000) {
+            const bypass = localStorage.getItem('kaizoku_force_bypass') === 'true';
             for (let i = 0; i < mirrors.length; i++) {
-                const url = `${mirrors[i]}${subPath}`;
+                let url = `${mirrors[i]}${subPath}`;
+                if (bypass) {
+                    url += `?t=${Date.now()}`;
+                }
                 let id = null;
                 try {
                     // Check if AbortController is supported (older iOS Safari / Private browsing safety)
@@ -1025,10 +1040,10 @@
                     </div>
                     <div class="mt-3 space-y-1.5">
                         ${card.category === 'Leader' ? 
-                            `<button onclick='setAsLeader(${JSON.stringify(card)})' class="w-full py-1.5 bg-zinc-800 hover:bg-pirate-red text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
+                            `<button onclick="setAsLeader('${cardId}')" class="w-full py-1.5 bg-zinc-800 hover:bg-pirate-red text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
                                 <i class="fa-solid fa-crown"></i> เลือกเป็น Leader
                              </button>` :
-                            `<button onclick='addToDeck(${JSON.stringify(card)})' class="w-full py-1.5 ${countInDeck >= 4 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-pirate-red hover:bg-pirate-redHover text-white'} text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm">
+                            `<button id="grid-add-btn-${cardId}" onclick="addToDeck('${cardId}')" class="w-full py-1.5 ${countInDeck >= 4 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-pirate-red hover:bg-pirate-redHover text-white'} text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm">
                                 <i class="fa-solid fa-plus"></i> เพิ่มลงเด็ค (${countInDeck})
                              </button>`
                         }
@@ -1073,7 +1088,10 @@
         }
 
         // Set active Leader
-        function setAsLeader(card) {
+        function setAsLeader(cardOrId) {
+            const card = typeof cardOrId === 'string' ? masterCardDatabase[cardOrId] : cardOrId;
+            if (!card) return;
+            selectedLeader = card;
             selectedLeader = card;
             document.getElementById('leader-empty').classList.add('hidden');
             
@@ -1112,8 +1130,8 @@
         }
 
         // 5. Deck Modification Logic
-        function addToDeck(card) {
-            const cardId = card.id || card.card_id;
+        function addToDeck(cardOrId) {
+            const cardId = typeof cardOrId === 'string' ? cardOrId : (cardOrId.id || cardOrId.card_id);
             const currentCount = deck[cardId] || 0;
             
             if (currentCount >= 4) {
@@ -1124,8 +1142,20 @@
             deck[cardId] = currentCount + 1;
             renderMyDeck();
             
-            // Flash success state by refreshing target search results count visualizer
-            filterCards();
+            // Instantaneous button update instead of rebuilding 120 card elements!
+            updateGridCardButton(cardId, currentCount + 1);
+        }
+
+        function updateGridCardButton(cardId, count) {
+            const btn = document.getElementById(`grid-add-btn-${cardId}`);
+            if (!btn) return;
+            
+            btn.innerHTML = `<i class="fa-solid fa-plus"></i> เพิ่มลงเด็ค (${count})`;
+            if (count >= 4) {
+                btn.className = "w-full py-1.5 bg-zinc-800 text-zinc-500 cursor-not-allowed text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm";
+            } else {
+                btn.className = "w-full py-1.5 bg-pirate-red hover:bg-pirate-redHover text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm";
+            }
         }
 
         function renderMyDeck() {
@@ -1215,16 +1245,17 @@
             }
             deck[id]++;
             renderMyDeck();
-            filterCards();
+            updateGridCardButton(id, deck[id]);
         }
 
         function decrementDeckCard(id) {
             deck[id]--;
+            const newCount = deck[id] || 0;
             if (deck[id] <= 0) {
                 delete deck[id];
             }
             renderMyDeck();
-            filterCards();
+            updateGridCardButton(id, newCount);
         }
 
         function resetDeck() {
