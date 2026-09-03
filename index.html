@@ -7,446 +7,7 @@
     <!-- ป้องกันการส่ง Referrer เพื่อแก้ปัญหาโดนบล็อกรูปภาพการ์ดจากเซิร์ฟเวอร์หลักของ Bandai -->
     <meta name="referrer" content="no-referrer">
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com">
-        // --- Counter Detailed Summary Logic ---
-        function getCounterSummary() {
-            let count2000 = 0;
-            let count1000 = 0;
-            let count0 = 0;
-            
-            Object.keys(deck).forEach(id => {
-                const qty = deck[id];
-                const card = masterCardDatabase[id] || {};
-                const counter = card.counter !== null && card.counter !== undefined ? parseInt(card.counter) : 0;
-                if (counter === 2000) {
-                    count2000 += qty;
-                } else if (counter === 1000) {
-                    count1000 += qty;
-                } else {
-                    count0 += qty;
-                }
-            });
-            
-            return {
-                count2000,
-                count1000,
-                count0
-            };
-        }
-
-        // --- Export Deck Infographic Image Generator ---
-        // --- Export Deck Infographic Image Generator (Card Kaizoku Gorgeous Grid Style) ---
-        async function exportDeckAsImage() {
-            const keys = Object.keys(deck);
-            if (keys.length === 0 && !selectedLeader) {
-                alert("กรุณาเพิ่ม Leader หรือ การ์ดลงเด็คก่อนส่งออกภาพครับ!");
-                return;
-            }
-
-            // Show beautiful loading overlay
-            const overlay = document.getElementById('export-loading-overlay');
-            const progressBar = document.getElementById('export-progress-bar');
-            const progressText = document.getElementById('export-progress-text');
-            
-            if (overlay) {
-                overlay.classList.remove('hidden');
-                progressBar.style.width = '0%';
-                progressText.textContent = '0% Complete';
-            }
-
-            const updateProgress = (percentage, text) => {
-                if (progressBar) progressBar.style.width = `${percentage}%`;
-                if (progressText) progressText.textContent = `${Math.round(percentage)}% - ${text}`;
-            };
-
-            try {
-                // Gather unique cards to load
-                const deckItems = keys.map(id => {
-                    const count = deck[id];
-                    const cardInfo = masterCardDatabase[id] || { name: id, colors: [], cost: 0, rarity: 'C', category: 'Character' };
-                    return {
-                        id: id,
-                        name: cardInfo.name,
-                        count: count,
-                        cost: cardInfo.cost !== undefined && cardInfo.cost !== null ? cardInfo.cost : '-',
-                        rarity: cardInfo.rarity || 'Common',
-                        category: cardInfo.category || 'Character',
-                        colors: cardInfo.colors || [],
-                        counter: cardInfo.counter !== undefined && cardInfo.counter !== null ? cardInfo.counter : 0,
-                        pack_id: cardInfo.pack_id,
-                        img_full_url: cardInfo.img_full_url || cardInfo.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${id}.png`
-                    };
-                });
-
-                // Load Leader image if available
-                let leaderImgObj = null;
-                if (selectedLeader) {
-                    updateProgress(5, 'กำลังโหลดรูปภาพ Leader...');
-                    const baseLeadImg = selectedLeader.img_full_url || selectedLeader.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${selectedLeader.id || selectedLeader.card_id}.png`;
-                    const proxyLeadUrl = `https://images.weserv.nl/?url=${encodeURIComponent(baseLeadImg)}`;
-                    leaderImgObj = await loadImageWithTimeout(proxyLeadUrl, 4000);
-                }
-
-                // Load main deck cards images in parallel with progress tracking
-                updateProgress(20, 'กำลังโหลดรูปภาพการ์ดในเด็คหลัก...');
-                const cardImages = {};
-                let loadedCount = 0;
-                
-                await Promise.all(deckItems.map(async (item) => {
-                    const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(item.img_full_url)}`;
-                    const img = await loadImageWithTimeout(proxyUrl, 3000);
-                    if (img) {
-                        cardImages[item.id] = img;
-                    }
-                    loadedCount++;
-                    const progressPercent = 20 + (loadedCount / deckItems.length) * 60; // scale from 20% to 80%
-                    updateProgress(progressPercent, `โหลดแล้ว ${loadedCount}/${deckItems.length} ใบ`);
-                }));
-
-                updateProgress(85, 'กำลังสร้างภาพโมเสกความละเอียดสูง...');
-
-                // Design offscreen canvas layout
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                const width = 1200;
-                const numCards = deckItems.length;
-                const cardsPerRow = 4;
-                const cardRows = Math.ceil(numCards / cardsPerRow);
-                
-                const headerHeight = 180;
-                const statsHeight = 240;
-                const cardWidth = 175;
-                const cardHeight = 245; // 3:4.2 aspect ratio
-                const cardTextHeight = 70; // height for text beneath card image
-                const rowHeight = cardHeight + cardTextHeight + 20; // total row spacing
-                const colGap = 20;
-                
-                const gridHeight = cardRows > 0 ? (cardRows * rowHeight) : 100;
-                const height = headerHeight + statsHeight + gridHeight + 120;
-                
-                canvas.width = width;
-                canvas.height = height;
-
-                // 1. Draw sleek pirate gold gradient background
-                const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-                bgGradient.addColorStop(0, '#0a0a0c');
-                bgGradient.addColorStop(0.5, '#121216');
-                bgGradient.addColorStop(1, '#060608');
-                ctx.fillStyle = bgGradient;
-                ctx.fillRect(0, 0, width, height);
-
-                // Draw gorgeous gold outer borders
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 4;
-                ctx.strokeRect(10, 10, width - 20, height - 20);
-                ctx.strokeStyle = '#2a2a35';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(16, 16, width - 32, height - 32);
-
-                // 2. Draw Title Header Banner
-                ctx.fillStyle = '#16161a';
-                ctx.fillRect(25, 25, width - 50, 120);
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(25, 25, width - 50, 120);
-
-                ctx.fillStyle = '#ff4b4b';
-                ctx.font = 'bold 36px "Kanit", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('DECK BUILDER PROJECT', width / 2, 65);
-
-                ctx.fillStyle = '#a1a1aa';
-                ctx.font = '15px "Kanit", sans-serif';
-                ctx.fillText('Official One Piece Card Game Premium Deck Summary & Visual List', width / 2, 110);
-
-                // Metadata bar
-                const activeDeckSelect = document.getElementById('saved-decks-select');
-                const deckName = (activeDeckSelect && activeDeckSelect.value) ? activeDeckSelect.value : "My Custom One Piece TCG Deck";
-                
-                ctx.fillStyle = '#ff4b4b';
-                ctx.fillRect(25, 160, width - 50, 45);
-                ctx.strokeStyle = '#ffd700';
-                ctx.strokeRect(25, 160, width - 50, 45);
-
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 16px "Kanit", sans-serif';
-                ctx.fillText(`ชื่อเด็ค: ${deckName}`, 45, 182);
-
-                ctx.textAlign = 'right';
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 14px "Courier New", monospace';
-                const todayStr = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                ctx.fillText(`ส่งออกเมื่อ: ${todayStr}`, width - 45, 182);
-
-                // 3. Left Panel - Leader Visual Frame
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = '#16161a';
-                ctx.fillRect(30, 220, 360, 210);
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(30, 220, 360, 210);
-
-                ctx.fillStyle = '#ffd700';
-                ctx.font = 'bold 14px "Kanit", sans-serif';
-                ctx.fillText('👑 การ์ดหัวหน้า (LEADER)', 45, 235);
-
-                if (selectedLeader) {
-                    // Draw leader image thumbnail
-                    const leaderX = 45;
-                    const leaderY = 265;
-                    const lImgWidth = 100;
-                    const lImgHeight = 140;
-
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(leaderX, leaderY, lImgWidth, lImgHeight);
-
-                    if (leaderImgObj) {
-                        ctx.drawImage(leaderImgObj, leaderX, leaderY, lImgWidth, lImgHeight);
-                    } else {
-                        // Draw clean letter fallback
-                        ctx.fillStyle = '#222';
-                        ctx.fillRect(leaderX, leaderY, lImgWidth, lImgHeight);
-                        ctx.strokeStyle = '#333';
-                        ctx.strokeRect(leaderX, leaderY, lImgWidth, lImgHeight);
-                        ctx.fillStyle = '#ffd700';
-                        ctx.font = 'bold 24px "Kanit", sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('L', leaderX + lImgWidth/2, leaderY + lImgHeight/2);
-                    }
-
-                    // Leader textual meta details
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'top';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 18px "Kanit", sans-serif';
-                    ctx.fillText(selectedLeader.name || "Leader", 160, 265);
-
-                    ctx.fillStyle = '#ff4b4b';
-                    ctx.font = 'bold 14px "Courier New", monospace';
-                    ctx.fillText(`ID: ${selectedLeader.id || selectedLeader.card_id}`, 160, 295);
-
-                    ctx.fillStyle = '#a1a1aa';
-                    ctx.font = '13px "Kanit", sans-serif';
-                    ctx.fillText(`ระดับความแรร์: ${selectedLeader.rarity || 'Leader (L)'}`, 160, 320);
-
-                    // Colors
-                    ctx.fillText('สีประจำตัว:', 160, 345);
-                    const lColors = selectedLeader.colors || [];
-                    lColors.forEach((col, idx) => {
-                        ctx.fillStyle = col === 'Red' ? '#ff4b4b' : col === 'Green' ? '#22c55e' : col === 'Blue' ? '#3b82f6' : col === 'Purple' ? '#a855f7' : col === 'Black' ? '#64748b' : col === 'Yellow' ? '#eab308' : '#3f3f46';
-                        ctx.fillRect(160 + (idx * 85), 370, 75, 24);
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 11px "Kanit", sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(col, 160 + (idx * 85) + 37, 370 + 12);
-                    });
-                } else {
-                    ctx.fillStyle = '#71717a';
-                    ctx.font = 'italic 15px "Kanit", sans-serif';
-                    ctx.fillText('ยังไม่ได้เลือก Leader ในระบบจัดเด็ค', 45, 290);
-                }
-
-                // 4. Right Panel - Stats Dashboard
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = '#16161a';
-                ctx.fillRect(410, 220, width - 410 - 30, 210);
-                ctx.strokeStyle = '#2a2a35';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(410, 220, width - 410 - 30, 210);
-
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 14px "Kanit", sans-serif';
-                ctx.fillText('📊 สถิติและการวิเคราะห์เด็คหลัก (DECK ANALYTICS)', 425, 235);
-
-                const counterSummary = getCounterSummary();
-                const totalMainCards = keys.reduce((acc, curr) => acc + deck[curr], 0);
-
-                ctx.font = '14px "Kanit", sans-serif';
-                ctx.fillStyle = '#e4e4e7';
-                ctx.fillText(`จำนวนการ์ดในเด็คทั้งหมด: ${totalMainCards} ใบ (กติกาสากลหลัก: 50 ใบ)`, 425, 265);
-
-                const totalPriceLabel = document.getElementById('deck-total-price') ? document.getElementById('deck-total-price').textContent : "$0.00 USD";
-                ctx.fillText(`มูลค่าเด็คโดยประมาณ (TCGPlayer USD): ${totalPriceLabel}`, 425, 290);
-
-                ctx.fillStyle = '#ffd700';
-                ctx.font = 'bold 14px "Kanit", sans-serif';
-                ctx.fillText('🛡️ สรุปค่าเคาน์เตอร์การ์ดป้องกันในเด็ค (Counter Stats Summary):', 425, 325);
-
-                ctx.font = 'bold 13px "Kanit", sans-serif';
-                ctx.fillStyle = '#22c55e';
-                ctx.fillRect(425, 355, 220, 45);
-                ctx.fillStyle = '#ffffff';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(`Counter +2,000 : ${counterSummary.count2000} ใบ`, 425 + 110, 355 + 22);
-
-                ctx.fillStyle = '#3b82f6';
-                ctx.fillRect(665, 355, 220, 45);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(`Counter +1,000 : ${counterSummary.count1000} ใบ`, 665 + 110, 355 + 22);
-
-                ctx.fillStyle = '#4b5563';
-                ctx.fillRect(905, 355, 230, 45);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(`ไม่มี Counter (0) : ${counterSummary.count0} ใบ`, 905 + 115, 355 + 22);
-
-                // 5. Visual Deck grid lists
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 18px "Kanit", sans-serif';
-                ctx.fillText('🗃️ รายชื่อภาพการ์ดและการกระจายของเด็ค (VISUAL MAIN DECK CARDS)', 30, 450);
-
-                const gridStartX = 30;
-                const gridStartY = 490;
-                const colWidth = cardWidth + colGap;
-
-                deckItems.forEach((item, index) => {
-                    const col = index % cardsPerRow;
-                    const row = Math.floor(index / cardsPerRow);
-
-                    const x = gridStartX + col * (colWidth + 90); // increase spacing horizontally
-                    const y = gridStartY + row * rowHeight;
-
-                    // Draw Image background frame
-                    ctx.fillStyle = '#16161a';
-                    ctx.fillRect(x, y, cardWidth, cardHeight);
-                    
-                    const primaryColor = item.colors[0] || 'Black';
-                    const borderHex = primaryColor === 'Red' ? '#ef4444' : primaryColor === 'Green' ? '#22c55e' : primaryColor === 'Blue' ? '#3b82f6' : primaryColor === 'Purple' ? '#a855f7' : primaryColor === 'Black' ? '#4b5563' : primaryColor === 'Yellow' ? '#eab308' : '#3f3f46';
-
-                    ctx.strokeStyle = borderHex;
-                    ctx.lineWidth = 2.5;
-                    ctx.strokeRect(x, y, cardWidth, cardHeight);
-
-                    // Draw actual loaded card image
-                    const cardImgObj = cardImages[item.id];
-                    if (cardImgObj) {
-                        ctx.drawImage(cardImgObj, x, y, cardWidth, cardHeight);
-                    } else {
-                        // letter fallback style if failed to load
-                        ctx.fillStyle = '#1f1f23';
-                        ctx.fillRect(x, y, cardWidth, cardHeight);
-                        ctx.fillStyle = '#71717a';
-                        ctx.font = 'bold 11px "Kanit", sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('ไม่มีภาพการ์ด', x + cardWidth/2, y + cardHeight/2 - 10);
-                        ctx.font = 'bold 13px "Courier New", monospace';
-                        ctx.fillText(item.id, x + cardWidth/2, y + cardHeight/2 + 15);
-                    }
-
-                    // 6. Draw Quantity Badge on top of image (Card Kaizoku Gorgeous Overlay!)
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    ctx.fillRect(x + 5, y + 5, 55, 30);
-                    ctx.strokeStyle = '#ffd700';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(x + 5, y + 5, 55, 30);
-
-                    ctx.fillStyle = '#ffd700';
-                    ctx.font = 'bold 18px "Kanit", sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(`${item.count}x`, x + 32, y + 20);
-
-                    // 7. Render Card Details beneath the card image
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'top';
-
-                    // Row 1: ID & Rarity
-                    ctx.fillStyle = '#ffd700';
-                    ctx.font = 'bold 12px "Courier New", monospace';
-                    ctx.fillText(`${item.id} [${item.rarity}]`, x, y + cardHeight + 6);
-
-                    // Row 2: Name
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 12px "Kanit", sans-serif';
-                    // Truncate name beautifully if too long for card block
-                    let dispName = item.name || "Unknown Card";
-                    if (dispName.length > 22) dispName = dispName.substring(0, 20) + "...";
-                    ctx.fillText(dispName, x, y + cardHeight + 23);
-
-                    // Row 3: Cost & Category
-                    ctx.fillStyle = '#a1a1aa';
-                    ctx.font = '10px "Kanit", sans-serif';
-                    ctx.fillText(`Cost: ${item.cost} | ${item.category}`, x, y + cardHeight + 40);
-
-                    // Row 4: Counter details
-                    const counterVal = item.counter !== null && item.counter !== undefined ? parseInt(item.counter) : 0;
-                    ctx.textAlign = 'right';
-                    if (counterVal > 0) {
-                        ctx.fillStyle = counterVal === 2000 ? '#22c55e' : '#3b82f6';
-                        ctx.font = 'bold 11px "Kanit", sans-serif';
-                        ctx.fillText(`🛡️ +${counterVal.toLocaleString()}`, x + cardWidth, y + cardHeight + 54);
-                    } else {
-                        ctx.fillStyle = '#52525b';
-                        ctx.font = '10px "Kanit", sans-serif';
-                        ctx.fillText('ไม่มีเคาน์เตอร์', x + cardWidth, y + cardHeight + 54);
-                    }
-                });
-
-                // Draw footer branding info on bottom
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#71717a';
-                ctx.font = '12px "Kanit", sans-serif';
-                ctx.fillText('© 2026 Deck Builder Project. Crafted digitally inside your local browser.', width / 2, height - 60);
-                ctx.font = '10px "Kanit", sans-serif';
-                ctx.fillText('All One Piece Card Game assets and trademarks belong to Eiichiro Oda, Shueisha, Toei Animation, and Bandai.', width / 2, height - 35);
-
-                updateProgress(98, 'กำลังบันทึกภาพ...');
-
-                // Trigger download link
-                const link = document.createElement('a');
-                link.download = `${deckName.replace(/\s+/g, '_')}-summary.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-
-                // Hide loading overlay
-                if (overlay) {
-                    overlay.classList.add('hidden');
-                }
-            } catch (err) {
-                console.error("Export deck image failed", err);
-                alert("เกิดข้อผิดพลาดในการโหลดรูปภาพส่งออกเด็คภายนอก กรุณาลองใหม่อีกครั้งครับ");
-                if (overlay) {
-                    overlay.classList.add('hidden');
-                }
-            }
-        }
-
-        // Helper Image loader with explicit browser security clearance & custom network timeout
-        function loadImageWithTimeout(src, timeoutMs = 3000) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous'; // CRITICAL FOR CANVAS EXPORT CONSTRAINTS
-                
-                const timer = setTimeout(() => {
-                    img.src = ''; // Cancel loading
-                    resolve(null); // Resolve with null on timeout
-                }, timeoutMs);
-
-                img.onload = () => {
-                    clearTimeout(timer);
-                    resolve(img);
-                };
-
-                img.onerror = () => {
-                    clearTimeout(timer);
-                    resolve(null);
-                };
-
-                img.src = src;
-            });
-        }
-    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome สำหรับไอคอน -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -570,7 +131,7 @@
                 
                 const width = 1200;
                 const numCards = deckItems.length;
-                const cardsPerRow = 4;
+                const cardsPerRow = 5;
                 const cardRows = Math.ceil(numCards / cardsPerRow);
                 
                 const headerHeight = 180;
@@ -579,7 +140,7 @@
                 const cardHeight = 245; // 3:4.2 aspect ratio
                 const cardTextHeight = 70; // height for text beneath card image
                 const rowHeight = cardHeight + cardTextHeight + 20; // total row spacing
-                const colGap = 20;
+                const colGap = 65;
                 
                 const gridHeight = cardRows > 0 ? (cardRows * rowHeight) : 100;
                 const height = headerHeight + statsHeight + gridHeight + 120;
@@ -771,7 +332,7 @@
                     const col = index % cardsPerRow;
                     const row = Math.floor(index / cardsPerRow);
 
-                    const x = gridStartX + col * (colWidth + 90); // increase spacing horizontally
+                    const x = gridStartX + col * (cardWidth + colGap); // increase spacing horizontally
                     const y = gridStartY + row * rowHeight;
 
                     // Draw Image background frame
@@ -1244,7 +805,7 @@
                 </div>
 
                 <!-- Main Card Database Grid Grid -->
-                <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[750px] pr-1">
+                <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-6 overflow-y-auto max-h-[750px] pr-1">
                     <!-- Spining Load Indicator -->
                     <div class="col-span-full py-16 text-center text-zinc-500">
                         <i class="fa-solid fa-spinner fa-spin text-3xl text-pirate-red mb-3"></i>
@@ -1273,6 +834,81 @@
                        .replace(/[\s\.\-_'’\",]/g, '')
                        .trim();
         }
+        // Bind Infinite Scroll Scroll Listener directly to the scrolling container
+        window.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('cards-grid');
+            if (grid) {
+                grid.addEventListener('scroll', () => {
+                    // Trigger loading next batch of 24 cards when scrolled near the bottom (180px margin)
+                    if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 180) {
+                        if (renderedCardsCount < currentFilteredCards.length) {
+                            const prevCount = renderedCardsCount;
+                            renderedCardsCount = Math.min(renderedCardsCount + 24, currentFilteredCards.length);
+                            appendMoreCards(currentFilteredCards.slice(prevCount, renderedCardsCount));
+                        }
+                    }
+                });
+            }
+        });
+        
+        function createCardElementHTML(card, cardId, countInDeck, imgUrl, priceDisplay) {
+            return `
+                <div class="bg-zinc-900 border border-pirate-border rounded-xl p-3 text-center flex flex-col justify-between transition-all duration-300 card-glow">
+                    <div>
+                        <div class="relative overflow-hidden rounded-lg aspect-[3/4.2] mb-2 bg-zinc-950 cursor-pointer group" onclick="openCardModal('${cardId}')">
+                            <img src="${imgUrl}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <span class="bg-zinc-900/90 text-white text-[11px] font-bold px-3 py-1.5 rounded-full border border-pirate-border shadow flex items-center gap-1.5">
+                                    <i class="fa-solid fa-magnifying-glass-plus text-pirate-red"></i> ดูภาพใหญ่ / คำแปล
+                                </span>
+                            </div>
+                        </div>
+
+                        <h4 class="text-xs font-bold text-white truncate px-1">${card.name}</h4>
+                        <div class="text-[10px] text-zinc-400 mt-0.5 font-mono">${cardId} | ${card.category}</div>
+                        <div class="text-[11px] text-pirate-accent font-semibold mt-1 font-mono">${priceDisplay}</div>
+                    </div>
+                    <div class="mt-3 space-y-1.5">
+                        ${card.category === 'Leader' ? 
+                            `<button onclick="setAsLeader('${cardId}')" class="w-full py-1.5 bg-zinc-800 hover:bg-pirate-red text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-crown"></i> Leader
+                             </button>` :
+                            `<button id="grid-add-btn-${cardId}" onclick="addToDeck('${cardId}')" class="w-full py-1.5 bg-pirate-red hover:bg-pirate-redHover text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> เพิ่ม (${countInDeck})
+                             </button>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function appendMoreCards(cardsChunk) {
+            const grid = document.getElementById('cards-grid');
+            if (!grid) return;
+            
+            let chunkHTML = '';
+            cardsChunk.forEach(card => {
+                const cardId = card.id || card.card_id;
+                const countInDeck = deck[cardId] || 0;
+                
+                // Get image url
+                const baseImgUrl = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${cardId}.png`;
+                const imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(baseImgUrl)}`;
+                
+                // Get price
+                const priceData = priceDatabase[cardId];
+                const priceDisplay = priceData ? `$${parseFloat(priceData.usd).toFixed(2)}` : 'N/A';
+                
+                chunkHTML += createCardElementHTML(card, cardId, countInDeck, imgUrl, priceDisplay);
+            });
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = chunkHTML;
+            while (tempDiv.firstChild) {
+                grid.appendChild(tempDiv.firstChild);
+            }
+        }
+
 
         function clearLocalCardCache() {
             if (confirm("คุณต้องการล้างแคชเครื่องเพื่อดาวน์โหลดคลังการ์ดและราคากลางใหม่ล่าสุดข้ามระบบ CDN ใช่หรือไม่? (เด็คที่บันทึกไว้จะไม่หายครับ)")) {
@@ -1505,6 +1141,10 @@
         let deck = {}; // { cardId: count }
         let selectedLeader = null; // Full Card Data Object
         
+        // --- High-Performance Progressive Rendering (Infinite Scroll) ---
+        let currentFilteredCards = [];
+        let renderedCardsCount = 24;
+        
         let activeColorsFilter = [];
         let activeCategoriesFilter = [];
 
@@ -1527,13 +1167,11 @@
                 return;
             }
             
-            // Create a copy of the pack list to iterate sequentially
             const packsToLoad = [...packsList];
             const resultsCounter = document.getElementById('card-results-counter');
             
             for (let i = 0; i < packsToLoad.length; i++) {
                 const pack = packsToLoad[i];
-                // Show gentle loading state in results counter
                 if (resultsCounter && document.getElementById('set-select').value === "ALL") {
                     resultsCounter.innerHTML = `ผลลัพธ์: พบการ์ด ${cardDatabase.length} ใบ <span class="text-[10px] text-pirate-accent ml-2 animate-pulse"><i class="fa-solid fa-cloud-arrow-down"></i> กำลังเตรียมข้อมูลเอฟเฟกต์ชุด ${pack.id} (${i+1}/${packsToLoad.length})...</span>`;
                 }
@@ -1543,73 +1181,70 @@
                     if (data && Array.isArray(data)) {
                         data.forEach(card => {
                             const cardId = card.id || card.card_id;
-                            if (masterCardDatabase[cardId]) {
-                                masterCardDatabase[cardId] = {
-                                    ...masterCardDatabase[cardId],
-                                    ...card,
-                                    id: cardId // Ensure ID field consistency
-                                };
+                            const target = masterCardDatabase[cardId];
+                            if (target) {
+                                target.effect = card.effect || "-";
+                                target.trigger = card.trigger || card.trigger_text || null;
+                                if (card.keywords) target.keywords = card.keywords;
+                                if (card.types) target.types = card.types;
+                                if (card.power !== undefined) target.power = card.power;
+                                if (card.cost !== undefined) target.cost = card.cost;
+                                if (card.counter !== undefined) target.counter = card.counter;
                             }
                         });
-                        
-                        // Silent update the UI if they are currently looking at ALL sets
-                        const currentSelect = document.getElementById('set-select').value;
-                        if (currentSelect === "ALL") {
-                            cardDatabase = Object.values(masterCardDatabase);
-                            // Only trigger rendering if they have typed something, to keep input fast and responsive
-                            const searchInputVal = document.getElementById('search-input').value.trim();
-                            if (searchInputVal.length > 2 || 
-                                document.getElementById('cost-select').value !== "ALL" || 
-                                document.getElementById('power-select').value !== "ALL" || 
-                                document.getElementById('counter-select').value !== "ALL") {
-                                filterCards(true); // silent / non-intrusive filter
-                            }
-                        }
                     }
                 } catch (e) {
                     console.warn(`Background fetch failed for pack ${pack.id}`, e);
                 }
                 
-                // Pause for 800ms between packs for an extremely light network profile
-                await new Promise(resolve => setTimeout(resolve, 800));
+                // Light pacing pause of 300ms (completely non-blocking!)
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
             
-            // Completed! Reset indicator text
             if (resultsCounter && document.getElementById('set-select').value === "ALL") {
                 resultsCounter.textContent = `ผลลัพธ์: พบการ์ด ${cardDatabase.length} ใบ (โหลดแคชสมบูรณ์แล้ว)`;
             }
             backgroundQueueRunning = false;
         }
 
-        // List of alternative mirrors for punk-records
-        const PUNK_RECORDS_MIRRORS = [
-            "https://cdn.jsdelivr.net/gh/buhbbl/punk-records@main/",
-            "https://raw.githubusercontent.com/buhbbl/punk-records/main/",
-            "https://fastly.jsdelivr.net/gh/buhbbl/punk-records@main/",
-            "https://gcore.jsdelivr.net/gh/buhbbl/punk-records@main/"
-        ];
-
-        // List of alternative mirrors for michalkiral/optcg-data
-        const PRICES_MIRRORS = [
-            "https://cdn.jsdelivr.net/gh/michalkiral/optcg-data@main/",
-            "https://raw.githubusercontent.com/michalkiral/optcg-data/main/",
-            "https://fastly.jsdelivr.net/gh/michalkiral/optcg-data@main/",
-            "https://gcore.jsdelivr.net/gh/michalkiral/optcg-data@main/"
-        ];
-
-        let activePunkRecordsMirror = PUNK_RECORDS_MIRRORS[0];
-
-        // Fetch helper with timeout and fallback mirrors (extremely robust with Safari AbortController safety)
         async function fetchWithFallback(mirrors, subPath, timeoutMs = 4000) {
+            const cacheName = 'deck-builder-cache-v1';
+            const cache = (typeof caches !== 'undefined') ? await caches.open(cacheName) : null;
             const bypass = localStorage.getItem('kaizoku_force_bypass') === 'true';
-            for (let i = 0; i < mirrors.length; i++) {
-                let url = `${mirrors[i]}${subPath}`;
-                if (bypass) {
-                    url += `?t=${Date.now()}`;
+
+            if (cache && !bypass) {
+                const cachedResponse = await cache.match(subPath);
+                if (cachedResponse) {
+                    try {
+                        const cachedData = await cachedResponse.json();
+                        // Non-blocking background fetch to keep cache fresh for next visit!
+                        fetchFreshWithFallback(mirrors, subPath, 8000)
+                            .then(freshData => {
+                                if (freshData) cache.put(subPath, new Response(JSON.stringify(freshData)));
+                            }).catch(() => {});
+                        return cachedData;
+                    } catch (e) {
+                        console.warn(`Failed to parse cache for ${subPath}, fetching fresh...`, e);
+                    }
                 }
+            }
+
+            const freshData = await fetchFreshWithFallback(mirrors, subPath, timeoutMs);
+            if (cache && freshData) {
+                try {
+                    await cache.put(subPath, new Response(JSON.stringify(freshData)));
+                } catch (e) {
+                    console.warn(`Cache write failed for ${subPath}`, e);
+                }
+            }
+            return freshData;
+        }
+
+        async function fetchFreshWithFallback(mirrors, subPath, timeoutMs = 4000) {
+            for (let i = 0; i < mirrors.length; i++) {
+                const url = `${mirrors[i]}${subPath}`;
                 let id = null;
                 try {
-                    // Check if AbortController is supported (older iOS Safari / Private browsing safety)
                     const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
                     const signal = controller ? controller.signal : null;
                     if (controller) {
@@ -1619,9 +1254,7 @@
                     }
                     
                     const response = await fetch(url, signal ? { signal } : {});
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const data = await response.json();
                     if (id) { clearTimeout(id); id = null; }
                     if (mirrors === PUNK_RECORDS_MIRRORS) {
@@ -1636,10 +1269,6 @@
             }
             throw new Error(`All mirrors failed for path: ${subPath}`);
         }
-
-        // CDN Sources
-        // PACKS_API subpath used with fetchWithFallback
-        // PRICES_API subpath used with fetchWithFallback
 
         // Safe app initialization handler
         async function initApp() {
@@ -1866,70 +1495,47 @@
                 return textMatch && colorMatch && categoryMatch && costMatch && powerMatch && counterMatch;
             });
 
-            document.getElementById('card-results-counter').textContent = `ผลลัพธ์: พบการ์ด ${filtered.length} ใบ`;
+            document.getElementById('card-results-counter').innerHTML = `ผลลัพธ์: พบการ์ด ${filtered.length} ใบ` + 
+                (filtered.length > 24 ? ` <span class="text-zinc-500 font-normal ml-1">(แสดง 24 ใบแรก เลื่อนลงเพื่อโหลดเพิ่ม)</span>` : '');
 
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-16 text-center text-zinc-600">
-                        <i class="fa-solid fa-magnifying-glass text-3xl mb-3 block"></i>
-                        <p class="text-sm">ไม่พบการ์ดที่ตรงกับเงื่อนไขการค้นหาของคุณ</p>
-                    </div>`;
-                return;
-            }
-
-            renderCardGrid(filtered);
+            currentFilteredCards = filtered;
+            renderedCardsCount = 24;
+            renderCardGrid(currentFilteredCards.slice(0, renderedCardsCount));
         }
 
         // Render card elements inside grid layout
                 function renderCardGrid(cards) {
             const grid = document.getElementById('cards-grid');
             grid.innerHTML = '';
-
+            grid.scrollTop = 0; // reset scroll to top on search/filters
+            
+            let gridHTML = '';
             cards.forEach(card => {
                 const cardId = card.id || card.card_id;
                 const countInDeck = deck[cardId] || 0;
                 
-                // Get image url
+                // Ensure english detail fetch on modal load, but keep list load O(1) in-memory
+                if (card.effect === undefined) {
+                    const packId = card.pack_id;
+                    fetch(`${activePunkRecordsMirror}english-asia/cards/${packId}/${cardId}.json`)
+                        .then(res => res.json())
+                        .then(fullData => {
+                            card.effect = fullData.effect || "-";
+                            card.trigger = fullData.trigger || null;
+                        })
+                        .catch(() => { card.effect = "-"; });
+                }
+                
                 const baseImgUrl = card.img_full_url || card.img_url || `https://en.onepiece-cardgame.com/images/cardlist/card/${cardId}.png`;
-                // ใช้ Weserv Image Proxy เพื่อให้ iPad/Safari สามารถโหลดรูปภาพข้ามโดเมนได้ 100% บายพาสระบบบล็อกของ Bandai
                 const imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(baseImgUrl)}`;
                 
-                // Get price
                 const priceData = priceDatabase[cardId];
                 const priceDisplay = priceData ? `$${parseFloat(priceData.usd).toFixed(2)}` : 'N/A';
 
-                const cardDiv = document.createElement('div');
-                cardDiv.className = "bg-zinc-900 border border-pirate-border rounded-xl p-3 text-center flex flex-col justify-between transition-all duration-300 card-glow";
-                
-                cardDiv.innerHTML = `
-                    <div>
-                        <div class="relative overflow-hidden rounded-lg aspect-[3/4.2] mb-2 bg-zinc-950 cursor-pointer group" onclick="openCardModal('${cardId}')">
-                            <!-- Bypassing image hotlinking via metadata no-referrer directly inside client browser -->
-                            <img src="${imgUrl}" alt="${card.name}" referrerpolicy="no-referrer" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy">
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                <span class="bg-zinc-900/90 text-white text-[11px] font-bold px-3 py-1.5 rounded-full border border-pirate-border shadow flex items-center gap-1.5">
-                                    <i class="fa-solid fa-magnifying-glass-plus text-pirate-red"></i> ดูภาพใหญ่ / คำแปล
-                                </span>
-                            </div>
-                        </div>
-
-                        <h4 class="text-xs font-bold text-white truncate px-1">${card.name}</h4>
-                        <div class="text-[10px] text-zinc-400 mt-0.5 font-mono">${cardId} | ${card.category}</div>
-                        <div class="text-[11px] text-pirate-accent font-semibold mt-1 font-mono">${priceDisplay}</div>
-                    </div>
-                    <div class="mt-3 space-y-1.5">
-                        ${card.category === 'Leader' ? 
-                            `<button onclick="setAsLeader('${cardId}')" class="w-full py-1.5 bg-zinc-800 hover:bg-pirate-red text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-crown"></i> เลือกเป็น Leader
-                             </button>` :
-                            `<button id="grid-add-btn-${cardId}" onclick="addToDeck('${cardId}')" class="w-full py-1.5 bg-pirate-red hover:bg-pirate-redHover text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 shadow-sm">
-                                <i class="fa-solid fa-plus"></i> เพิ่มลงเด็ค (${countInDeck})
-                             </button>`
-                        }
-                    </div>
-                `;
-                grid.appendChild(cardDiv);
+                gridHTML += createCardElementHTML(card, cardId, countInDeck, imgUrl, priceDisplay);
             });
+            
+            grid.innerHTML = gridHTML;
         }
 
         // Toggle Filter Handlers
@@ -2034,8 +1640,6 @@
             let totalMainCards = 0;
             let totalPrice = 0.0;
             
-            listContainer.innerHTML = '';
-
             if (keys.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-10 text-zinc-600 text-sm">
@@ -2045,22 +1649,14 @@
                 return;
             }
 
-            // Gather metadata of deck cards from loaded database
             const deckItems = keys.map(id => {
                 const count = deck[id];
                 totalMainCards += count;
                 
-                // Find card in global database or searcher indexes
-                let cardInfo = masterCardDatabase[id] || cardDatabase.find(c => c.id === id);
-                if (!cardInfo) {
-                    // Fallback stub if card selected but set changed
-                    cardInfo = { id: id, name: id, colors: [], cost: 0 };
-                }
-
+                let cardInfo = masterCardDatabase[id] || { id: id, name: id, colors: [], cost: 0 };
                 const usdPrice = priceDatabase[id] ? parseFloat(priceDatabase[id].usd) : 0;
                 totalPrice += (usdPrice * count);
 
-                // Color validation against active leader
                 let colorMismatch = false;
                 if (selectedLeader) {
                     const leaderColors = selectedLeader.colors || [];
@@ -2080,28 +1676,27 @@
                 };
             });
 
-            // Render list items
+            let listHTML = '';
             deckItems.forEach(item => {
-                const row = document.createElement('div');
-                row.className = "flex justify-between items-center bg-zinc-900 border border-pirate-border rounded-lg p-2.5 hover:border-zinc-700 transition";
-                
                 const priceLabel = item.price > 0 ? `($${item.price.toFixed(2)})` : '';
                 const warningBadge = item.mismatch ? `<span class="ml-1 text-[10px] text-pirate-red font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> สีผิดกฎ!</span>` : '';
 
-                row.innerHTML = `
-                    <div class="min-w-0 flex-grow pr-3">
-                        <div class="text-xs font-bold text-white truncate">
-                            <span class="text-pirate-red font-mono mr-1">${item.count}x</span> ${item.name}
+                listHTML += `
+                    <div class="flex justify-between items-center bg-zinc-900 border border-pirate-border rounded-lg p-2.5 hover:border-zinc-700 transition">
+                        <div class="min-w-0 flex-grow pr-3">
+                            <div class="text-xs font-bold text-white truncate">
+                                <span class="text-pirate-red font-mono mr-1">${item.count}x</span> ${item.name}
+                            </div>
+                            <div class="text-[10px] text-zinc-500 font-mono mt-0.5">${item.id} ${priceLabel} ${warningBadge}</div>
                         </div>
-                        <div class="text-[10px] text-zinc-500 font-mono mt-0.5">${item.id} ${priceLabel} ${warningBadge}</div>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="decrementDeckCard('${item.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition">-</button>
-                        <button onclick="incrementDeckCard('${item.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition">+</button>
+                        <div class="flex gap-1">
+                            <button onclick="decrementDeckCard('${item.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition">-</button>
+                            <button onclick="incrementDeckCard('${item.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition">+</button>
+                        </div>
                     </div>
                 `;
-                listContainer.appendChild(row);
             });
+            listContainer.innerHTML = listHTML;
 
             updateDeckStats(totalMainCards, totalPrice);
             updateCostCurve(deckItems);
@@ -2186,9 +1781,7 @@
         // 6. Cost Curve dynamic CSS renderer
         function updateCostCurve(items) {
             const barsContainer = document.getElementById('cost-curve-bars');
-            barsContainer.innerHTML = '';
-
-            const costBuckets = Array(11).fill(0); // 0 to 10+ cost values
+            const costBuckets = Array(11).fill(0);
             items.forEach(item => {
                 const cost = item.cost !== null ? parseInt(item.cost) : 0;
                 const index = Math.min(cost, 10);
@@ -2196,23 +1789,22 @@
             });
 
             const maxCount = Math.max(...costBuckets) || 1;
+            let barsHTML = '';
 
             costBuckets.forEach((qty, costVal) => {
                 const barHeightPercent = (qty / maxCount) * 100;
-                const bar = document.createElement('div');
-                bar.className = "flex-grow flex flex-col items-center group relative";
-                
-                bar.innerHTML = `
-                    <div class="w-full bg-zinc-800 group-hover:bg-pirate-red/30 rounded-t h-24 flex items-end">
-                        <div class="w-full bg-pirate-red rounded-t transition-all duration-300" style="height: ${qty > 0 ? barHeightPercent : 0}%"></div>
+                barsHTML += `
+                    <div class="flex-grow flex flex-col items-center group relative">
+                        <div class="w-full bg-zinc-800 group-hover:bg-pirate-red/30 rounded-t h-24 flex items-end">
+                            <div class="w-full bg-pirate-red rounded-t transition-all duration-300" style="height: ${qty > 0 ? barHeightPercent : 0}%"></div>
+                        </div>
+                        <span class="absolute bottom-full mb-1 bg-zinc-950 border border-pirate-border px-2 py-0.5 rounded text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity font-mono z-10 pointer-events-none">
+                            Cost ${costVal === 10 ? '10+' : costVal}: ${qty} ใบ
+                        </span>
                     </div>
-                    <!-- Tooltip -->
-                    <span class="absolute bottom-full mb-1 bg-zinc-950 border border-pirate-border px-2 py-0.5 rounded text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity font-mono z-10 pointer-events-none">
-                        Cost ${costVal === 10 ? '10+' : costVal}: ${qty} ใบ
-                    </span>
                 `;
-                barsContainer.appendChild(bar);
             });
+            barsContainer.innerHTML = barsHTML;
         }
 
         // 7. Hypergeometric probability calculation formula (Searcher odds)
@@ -2382,7 +1974,7 @@
                 
                 const width = 1200;
                 const numCards = deckItems.length;
-                const cardsPerRow = 4;
+                const cardsPerRow = 5;
                 const cardRows = Math.ceil(numCards / cardsPerRow);
                 
                 const headerHeight = 180;
@@ -2391,7 +1983,7 @@
                 const cardHeight = 245; // 3:4.2 aspect ratio
                 const cardTextHeight = 70; // height for text beneath card image
                 const rowHeight = cardHeight + cardTextHeight + 20; // total row spacing
-                const colGap = 20;
+                const colGap = 65;
                 
                 const gridHeight = cardRows > 0 ? (cardRows * rowHeight) : 100;
                 const height = headerHeight + statsHeight + gridHeight + 120;
@@ -2583,7 +2175,7 @@
                     const col = index % cardsPerRow;
                     const row = Math.floor(index / cardsPerRow);
 
-                    const x = gridStartX + col * (colWidth + 90); // increase spacing horizontally
+                    const x = gridStartX + col * (cardWidth + colGap); // increase spacing horizontally
                     const y = gridStartY + row * rowHeight;
 
                     // Draw Image background frame
