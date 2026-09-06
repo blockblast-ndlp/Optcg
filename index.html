@@ -8,6 +8,9 @@
     <meta name="referrer" content="no-referrer">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome สำหรับไอคอน -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -512,8 +515,8 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-4">
-                <span class="text-xs bg-zinc-800 text-pirate-accent border border-zinc-700 px-3 py-1.5 rounded-full font-mono">
-                    <i class="fa-solid fa-cloud-bolt mr-1"></i> Static Hosted (GitHub Pages Ready)
+                <span id="db-status-badge" class="text-xs bg-zinc-800 text-pirate-accent border border-zinc-700 px-3 py-1.5 rounded-full font-mono transition-all duration-300">
+                    <i class="fa-solid fa-database mr-1 animate-pulse"></i> ⚙️ กำลังเชื่อมต่อ Supabase...
                 </span>
                 <!-- ปุ่ม อัปเดตข้อมูลการ์ดล่าสุด (Bypass CDN) -->
                 <button onclick="clearLocalCardCache()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-zinc-700 hover:border-pirate-red px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-95 shadow font-semibold">
@@ -827,6 +830,52 @@
     <!-- App Logic Execution Script Javascript -->
     <script>
 
+        // ==========================================
+        // ☁️ SUPABASE CONFIGURATION (ตั้งค่าด้วยคีย์ของคุณตรงนี้)
+        // ==========================================
+        const SUPABASE_URL = "https://awzvixbsnzcomrztntff.supabase.co"; // <-- ใส่ URL โครงการ Supabase ของคุณที่นี่
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3enZpeGJzbnpjb21yenRudGZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0Mjk2MTAsImV4cCI6MjEwNDAwNTYxMH0.dLzmW5h-NO2EH3pXfVPNMit132l5dJEDAQqLeDC_nyc";              // <-- ใส่ ANON API KEY ของคุณที่นี่
+
+        let supabase = null;
+        let isSupabaseActive = false;
+
+        function initSupabaseClient() {
+            const statusBadge = document.getElementById('db-status-badge');
+            if (SUPABASE_URL !== "https://your-project.supabase.co" && SUPABASE_ANON_KEY !== "your-anon-key") {
+                try {
+                    if (typeof supabase !== 'undefined' && supabase.createClient) {
+                        supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                        isSupabaseActive = true;
+                        if (statusBadge) {
+                            statusBadge.className = "text-xs bg-green-950/40 text-green-400 border border-green-900/50 px-3 py-1.5 rounded-full font-mono flex items-center gap-1.5 shadow-sm";
+                            statusBadge.innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> 🟢 เชื่อมต่อ Supabase สำเร็จ';
+                        }
+                        console.log("Supabase Client initialized successfully.");
+                    } else {
+                        throw new Error("Supabase JS Library is not loaded.");
+                    }
+                } catch (e) {
+                    console.error("Failed to initialize Supabase:", e);
+                    useLocalCDNFallback("🔴 เชื่อมต่อ Supabase ล้มเหลว (เช็ค Console)");
+                }
+            } else {
+                useLocalCDNFallback("🟡 โหมดสำรอง CDN (ยังไม่ได้ตั้งค่า Supabase)");
+            }
+        }
+
+        function useLocalCDNFallback(message) {
+            supabase = null;
+            isSupabaseActive = false;
+            const statusBadge = document.getElementById('db-status-badge');
+            if (statusBadge) {
+                statusBadge.className = "text-xs bg-zinc-800 text-pirate-accent border border-zinc-700 px-3 py-1.5 rounded-full font-mono flex items-center gap-1.5 shadow-sm";
+                statusBadge.innerHTML = `<i class="fa-solid fa-cloud-bolt text-pirate-accent"></i> ${message}`;
+            }
+            console.log("Running in offline/local CDN fallback mode.");
+        }
+
+        // ==========================================
+
         // --- Helper for Advanced Searching (ignores spaces, punctuation, dots) ---
         function normalizeSearchText(text) {
             if (!text) return "";
@@ -920,28 +969,47 @@
         // --- System Saved Decks States ---
         let savedDecks = {};
 
-        function initSavedDecksDropdown() {
+        async function initSavedDecksDropdown() {
             const select = document.getElementById('saved-decks-select');
             if (!select) return;
             select.innerHTML = '<option value="">-- ไม่มีเด็คที่เลือก --</option>';
             
+            // 1. โหลดข้อมูล Local Storage ก่อนเพื่อสแตนด์บายความเร็วสูง
             try {
                 const stored = localStorage.getItem('kaizoku_saved_decks');
                 if (stored) {
                     savedDecks = JSON.parse(stored);
-                    Object.keys(savedDecks).forEach(name => {
-                        const option = document.createElement('option');
-                        option.value = name;
-                        option.textContent = name;
-                        select.appendChild(option);
-                    });
                 }
             } catch (e) {
-                console.error("Failed to load saved decks", e);
+                console.error("Failed to load local saved decks", e);
             }
+            
+            // 2. ดึงและซิงค์ข้อมูลจากคลาวด์ Supabase หากเปิดใช้งานสำเร็จ
+            if (isSupabaseActive && supabase) {
+                try {
+                    const { data, error } = await supabase.from('saved_decks').select('*');
+                    if (data && data.length > 0) {
+                        data.forEach(row => {
+                            savedDecks[row.name] = row.deck;
+                        });
+                        // เขียนทับ LocalStorage ให้ตรงกับคลาวด์ล่าสุดเพื่อการทำงานออฟไลน์
+                        localStorage.setItem('kaizoku_saved_decks', JSON.stringify(savedDecks));
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch decks from Supabase:", e);
+                }
+            }
+            
+            // 3. วาดรายการตัวเลือกใน Dropdown
+            Object.keys(savedDecks).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
         }
 
-        function saveCurrentDeck() {
+        async function saveCurrentDeck() {
             const nameInput = document.getElementById('new-deck-name');
             const name = nameInput.value.trim();
             
@@ -950,17 +1018,34 @@
                 return;
             }
             
-            savedDecks[name] = {
+            const deckData = {
                 deck: JSON.parse(JSON.stringify(deck)),
                 leader: selectedLeader ? JSON.parse(JSON.stringify(selectedLeader)) : null
             };
             
+            savedDecks[name] = deckData;
+            
             try {
                 localStorage.setItem('kaizoku_saved_decks', JSON.stringify(savedDecks));
+                
+                // ซิงค์บันทึกขึ้นคลาวด์ Supabase แบบเรียลไทม์
+                if (isSupabaseActive && supabase) {
+                    const { error } = await supabase.from('saved_decks').upsert({
+                        name: name,
+                        deck: deckData
+                    }, { onConflict: 'name' });
+                    
+                    if (error) {
+                        console.error("Failed to sync deck to Supabase", error);
+                    } else {
+                        console.log("Deck successfully synced to Supabase.");
+                    }
+                }
+                
                 nameInput.value = '';
-                initSavedDecksDropdown();
+                await initSavedDecksDropdown();
                 document.getElementById('saved-decks-select').value = name;
-                alert(`บันทึกเด็ค "${name}" สำเร็จเรียบร้อยแล้วครับ! สามารถจัดเด็คถัดไปได้ทันที`);
+                alert(`บันทึกเด็ค "${name}" ลงในระบบคลาวด์และเครื่องคุณสำเร็จเรียบร้อยแล้วครับ!`);
             } catch (e) {
                 alert("บันทึกล้มเหลว: หน่วยความจำ localStorage ของบราวเซอร์อาจเต็ม");
             }
@@ -983,22 +1068,29 @@
                 }
                 renderMyDeck();
                 filterCards();
-                alert(`โหลดเด็ค "${name}" เข้าสู่ชีตจัดเด็คสำเร็จแล้วครับ!`);
+                alert(`โหลดเด็ค "${name}" สำเร็จแล้วครับ!`);
             }
         }
 
-        function deleteSavedDeck() {
+        async function deleteSavedDeck() {
             const name = document.getElementById('saved-decks-select').value;
             if (!name) {
                 alert("กรุณาเลือกเด็คที่ต้องการลบในช่องรายการก่อนครับ!");
                 return;
             }
             
-            if (confirm(`คุณต้องการลบเด็คที่บันทึกไว้ชื่อ "${name}" หรือไม่?`)) {
+            if (confirm(`คุณต้องการลบเด็คที่บันทึกไว้ชื่อ "${name}" หรือไม่? (ข้อมูลบนระบบคลาวด์จะถูกลบไปด้วย)`)) {
                 delete savedDecks[name];
                 try {
                     localStorage.setItem('kaizoku_saved_decks', JSON.stringify(savedDecks));
-                    initSavedDecksDropdown();
+                    
+                    // ลบข้อมูลบนคลาวด์ Supabase
+                    if (isSupabaseActive && supabase) {
+                        const { error } = await supabase.from('saved_decks').delete().eq('name', name);
+                        if (error) console.error("Failed to delete deck from Supabase", error);
+                    }
+                    
+                    await initSavedDecksDropdown();
                     alert(`ลบเด็ค "${name}" สำเร็จเรียบร้อยแล้วครับ`);
                 } catch (e) {
                     console.error(e);
@@ -1272,17 +1364,21 @@
 
         // Safe app initialization handler
         async function initApp() {
-            initSavedDecksDropdown();
+            // 1. เริ่มต้นไคลเอนต์ Supabase ก่อนดึงข้อมูลใด ๆ
+            initSupabaseClient();
+            
+            // 2. โหลดสล๊อตสลับเด็ค (ซิงค์เด็คจากคลาวด์สดอัตโนมัติ)
+            await initSavedDecksDropdown();
             updateSearcherOdds();
             
-            // Fire price database fetch in background (non-blocking!)
+            // 3. ดึงข้อมูลราคาการ์ดแบบคู่ขนานเบื้องหลัง
             fetchPriceDatabase().then(() => {
                 if (typeof renderMyDeck === 'function') {
                     try { renderMyDeck(); } catch(e){}
                 }
             });
             
-            // Only block on master card DB
+            // 4. บล็อกโหลดหลักเพื่อดึงคลังการ์ดและชุดการ์ดจาก Supabase
             await fetchMasterCardDatabase();
             await fetchPacksList();
         }
@@ -1294,8 +1390,31 @@
             initApp();
         }
 
-                // 1.5 Fetch Master Card Database once at startup
+                // 1.5 Fetch Master Card Database once at startup (ดึงผ่าน Supabase หรือ Fallback ไปยัง CDN ทั่วโลก)
         async function fetchMasterCardDatabase() {
+            if (isSupabaseActive && supabase) {
+                try {
+                    console.log("Fetching cards from Supabase...");
+                    const { data, error } = await supabase.from('cards').select('*');
+                    if (error) throw error;
+                    
+                    if (data && data.length > 0) {
+                        masterCardDatabase = {};
+                        data.forEach(card => {
+                            const cardId = card.id || card.card_id;
+                            masterCardDatabase[cardId] = {
+                                ...card,
+                                id: cardId // คุมความสม่ำเสมอของรหัสการ์ด
+                            };
+                        });
+                        console.log(`Loaded ${data.length} cards successfully from Supabase.`);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch cards from Supabase, falling back to CDN", e);
+                }
+            }
+            
             try {
                 masterCardDatabase = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/index/cards_by_id.json", 6000);
             } catch (e) {
@@ -1313,48 +1432,79 @@
             }
         }
 
-        // 2. Fetch Set lists and build dropdown selector
+        // 2. Fetch Set lists and build dropdown selector (ดึงข้อมูลผ่าน Supabase หรือ CDN ทั่วโลก)
         async function fetchPacksList() {
-            try {
-                const data = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/packs.json", 4000);
-                packsList = Object.values(data);
-                
-                // Filter sets list to keep only boosters, extra packs, starter decks, promos
-                const select = document.getElementById('set-select');
-                select.innerHTML = ''; // Clear loaded spinner
-                
-                // Sort packs list (newest first based on code or ID)
-                packsList.sort((a, b) => b.id.localeCompare(a.id));
+            let data = null;
+            if (isSupabaseActive && supabase) {
+                try {
+                    console.log("Fetching packs from Supabase...");
+                    const { data: dbData, error } = await supabase.from('packs').select('*').order('id', { ascending: false });
+                    if (error) throw error;
+                    if (dbData && dbData.length > 0) {
+                        data = dbData.map(p => ({
+                            id: p.id,
+                            raw_title: p.name,
+                            release_date: p.release_date
+                        }));
+                        console.log(`Loaded ${dbData.length} packs successfully from Supabase.`);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch packs from Supabase, falling back to CDN", e);
+                }
+            }
+            
+            if (!data) {
+                try {
+                    const cdnData = await fetchWithFallback(PUNK_RECORDS_MIRRORS, "english-asia/packs.json", 4000);
+                    data = Object.values(cdnData);
+                } catch (e) {
+                    document.getElementById('cards-grid').innerHTML = `
+                        <div class="col-span-full py-16 text-center text-pirate-red">
+                            <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
+                            <p class="text-sm font-semibold">การเชื่อมโยงขัดข้อง (เซิร์ฟเวอร์หลักช้าหรือไม่มีอินเทอร์เน็ต)</p>
+                            <p class="text-xs text-zinc-500 mt-2">ระบบล้มเหลวในการเชื่อมต่อ CDN ทั้งหมด กรุณาลองตรวจสอบสัญญาณอินเทอร์เน็ตหรือรีเฟรชหน้าเว็บอีกครั้งครับ</p>
+                        </div>`;
+                    return;
+                }
+            }
 
-                // Prepend ALL option at the top as the new gorgeous default search mode
-                const allOption = document.createElement('option');
-                allOption.value = 'ALL';
-                allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
-                allOption.selected = true; // Default to searching everything!
-                select.appendChild(allOption);
+            packsList = data;
+            
+            // Filter sets list to keep only boosters, extra packs, starter decks, promos
+            const select = document.getElementById('set-select');
+            select.innerHTML = ''; // Clear loaded spinner
+            
+            // Sort packs list (newest first based on code or ID)
+            packsList.sort((a, b) => b.id.localeCompare(a.id));
 
-                packsList.forEach(pack => {
-                    const option = document.createElement('option');
-                    option.value = pack.id;
-                    
-                    // Parse name
-                    const title = pack.raw_title || pack.title_parts.title;
-                    option.textContent = title;
-                    select.appendChild(option);
-                });
+            // Prepend ALL option at the top as the new gorgeous default search mode
+            const allOption = document.createElement('option');
+            allOption.value = 'ALL';
+            allOption.textContent = '📦 ทุกชุดการ์ด (All Sets / Promos / Decks)';
+            allOption.selected = true; // Default to searching everything!
+            select.appendChild(allOption);
 
-                // Trigger first cards load
-                await loadSetCards();
+            packsList.forEach(pack => {
+                const option = document.createElement('option');
+                option.value = pack.id;
                 
-                // Start background loading of all packs sequentially (non-blocking)
+                // Parse name
+                const title = pack.raw_title || (pack.title_parts && pack.title_parts.title) || pack.id;
+                option.textContent = title;
+                select.appendChild(option);
+            });
+
+            // Trigger first cards load
+            await loadSetCards();
+            
+            // สั่งรันโหลดแปลเบื้องหลังต่อในคลัง CDN สำรองเท่านั้น (หากใช้ Supabase ข้อมูลคำแปลจะแฟลชเข้าเครื่องตั้งแต่สเต็ปแรกแล้ว)
+            if (!isSupabaseActive) {
                 startBackgroundEnrichment();
-            } catch (e) {
-                document.getElementById('cards-grid').innerHTML = `
-                    <div class="col-span-full py-16 text-center text-pirate-red">
-                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
-                        <p class="text-sm font-semibold">การเชื่อมโยงขัดข้อง (เซิร์ฟเวอร์หลักช้าหรือไม่มีอินเทอร์เน็ต)</p>
-                        <p class="text-xs text-zinc-500 mt-2">ระบบล้มเหลวในการเชื่อมต่อ CDN ทั้งหมด กรุณาลองตรวจสอบสัญญาณอินเทอร์เน็ตหรือรีเฟรชหน้าเว็บอีกครั้งครับ</p>
-                    </div>`;
+            } else {
+                const resultsCounter = document.getElementById('card-results-counter');
+                if (resultsCounter) {
+                    resultsCounter.textContent = `ผลลัพธ์: พบการ์ด ${cardDatabase.length} ใบ (ดึงตรงจากคลาวด์ Supabase สำเร็จ)`;
+                }
             }
         }
 
