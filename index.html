@@ -833,7 +833,7 @@
         // ==========================================
         // ☁️ SUPABASE CONFIGURATION (ตั้งค่าด้วยคีย์ของคุณตรงนี้)
         // ==========================================
-        const SUPABASE_URL = "https://awzvixbsnzcomrztntff.supabase.co/rest/v1/"; // <-- ใส่ URL โครงการ Supabase ของคุณที่นี่
+        const SUPABASE_URL = "https://awzvixbsnzcomrztntff.supabase.co"; // <-- ใส่ URL โครงการ Supabase ของคุณที่นี่
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3enZpeGJzbnpjb21yenRudGZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0Mjk2MTAsImV4cCI6MjEwNDAwNTYxMH0.dLzmW5h-NO2EH3pXfVPNMit132l5dJEDAQqLeDC_nyc";              // <-- ใส่ ANON API KEY ของคุณที่นี่
 
         let supabase = null;
@@ -843,8 +843,8 @@
             const statusBadge = document.getElementById('db-status-badge');
             if (SUPABASE_URL !== "https://your-project.supabase.co" && SUPABASE_ANON_KEY !== "your-anon-key") {
                 try {
-                    if (typeof supabase !== 'undefined' && supabase.createClient) {
-                        supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                         isSupabaseActive = true;
                         if (statusBadge) {
                             statusBadge.className = "text-xs bg-green-950/40 text-green-400 border border-green-900/50 px-3 py-1.5 rounded-full font-mono flex items-center gap-1.5 shadow-sm";
